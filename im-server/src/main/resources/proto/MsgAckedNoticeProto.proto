@@ -1,0 +1,12 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+/*
+  通知消息发送者自己发出的哪些消息被确认
+*/
+message MsgAckedNotice {
+  // 谁确认了消息
+  int64 uid = 1;
+  repeated string msgIds = 2;
+}

@@ -1,0 +1,62 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+import "google/protobuf/timestamp.proto";
+
+message IMPacket {
+  int32 type = 1;
+  int64 uid = 2;
+  string token = 3;
+  bytes data = 4;
+}
+
+message ChatMsg {
+  // 0-单聊消息；1-群聊消息
+  int32 type = 1;
+  // uuid（客户端生成，对于群聊，可能暂时用不到该字段）
+  string msgId = 2;
+  int64 msgSeq = 3;
+  int64 fromUid = 4;
+  // 表示用户或群id（对应单聊、群聊）
+  int64 toId = 5;
+  string content = 6;
+  google.protobuf.Timestamp time = 7;
+}
+
+message MsgAck {
+  // 发起确认者
+  int64 senderUid = 1;
+  // 对谁的信息确认（已读）
+  int64 toUid = 2;
+  repeated string msgIds = 3;
+}
+
+/*
+  通知消息发送者自己发出的哪些消息被确认
+*/
+message MsgAckedNotice {
+  // 谁确认了消息
+  int64 uid = 1;
+  repeated string msgIds = 2;
+}
+
+message Login {
+  int64 uid = 1;
+  string token = 2;
+}
+
+message MsgRead {
+  /*
+    uid用户确认了toId的消息，即toId发给uid的消息已读
+  */
+  int64 uid = 1;
+  int64 toId = 2;
+  // 根据msgid即可操作数据库（唯一）
+  repeated string msgIds = 3;
+  // 留待群聊已读功能，用以区分单聊群聊
+  int32 type = 4;
+}
+
+
+

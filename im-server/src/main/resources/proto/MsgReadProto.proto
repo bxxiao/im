@@ -1,0 +1,15 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+message MsgRead {
+  /*
+    uid用户确认了toId的消息，即toId发给uid的消息已读
+  */
+  int64 uid = 1;
+  int64 toId = 2;
+  // 根据msgid即可操作数据库（唯一）
+  repeated string msgIds = 3;
+  // 留待群聊已读功能，用以区分单聊群聊
+  int32 type = 4;
+}

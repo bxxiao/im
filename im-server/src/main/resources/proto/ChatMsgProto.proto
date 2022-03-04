@@ -1,0 +1,21 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+import "google/protobuf/timestamp.proto";
+
+/*
+  单聊、群聊消息
+*/
+message ChatMsg {
+  // 0-单聊消息；1-群聊消息
+  int32 type = 1;
+  // uuid（客户端生成，对于群聊，可能暂时用不到该字段）
+  string msgId = 2;
+  int64 msgSeq = 3;
+  int64 fromUid = 4;
+  // 表示用户或群id（对应单聊、群聊）
+  int64 toId = 5;
+  string content = 6;
+  string time = 7;
+}

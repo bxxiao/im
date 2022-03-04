@@ -1,0 +1,14 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+/*
+  消息发送者发出的消息服务器接收后通知其信息已收到
+*/
+message MsgAck {
+  // 消息发起者
+  int64 senderUid = 1;
+  // 发给谁
+  int64 toId = 2;
+  string msgId = 3;
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bx.im.mapper.UserMapper">
+
+    <select id="selfSelect" resultType="com.bx.im.entity.User">
+        <!-- ${ew.customSqlSegment}自动生成条件子句 -->
+        SELECT * FROM user ${ew.customSqlSegment}
+    </select>
+    <select id="mySelect2" resultType="com.bx.im.entity.User">
+        select  * from user where name = #{ew}
+    </select>
+</mapper>
