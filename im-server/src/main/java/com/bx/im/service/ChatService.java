@@ -34,4 +34,12 @@ public interface ChatService {
      * @return
      */
     ChatSessionDTO createSession(Long uid, Long toId, int type);
+
+    /**
+     * 更新用户在指定群的last_msgSeq
+     * @param seq
+     * @param groupId
+     * @param uid
+     */
+    void updateLastSeq(Long seq, Long groupId, Long uid);
 }

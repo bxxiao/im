@@ -44,14 +44,6 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ChatMsgProto.ChatMsg msg) throws Exception {
-        // 不管单群聊，先发送个确认回去
-        MsgAckProto.MsgAck msgAck = MsgAckProto.MsgAck.newBuilder()
-                .setSenderUid(IMUtil.getOnlineUserId(ctx.channel()))
-                .setToId(msg.getToId())
-                .setMsgId(msg.getMsgId())
-                .build();
-        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.MSGACK_TYPE, null, msgAck);
-        ctx.channel().writeAndFlush(packet);
 
         int msgType = msg.getType();
         switch (msgType) {
@@ -69,13 +61,13 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
     /*
      * 连接关闭，则离线
      * */
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         Long uid = ctx.channel().attr(ChannelContext.SESSION_KEY).get().getId();
         ChannelContext.offLine(uid);
         redisService.userOffline(uid);
     }
-
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
         /*
         * 若消息已存在，则停止。
@@ -84,13 +76,17 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         * */
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
         wrapper.eq("msg_id", chatMsg.getMsgId());
-        if (msgService.count(wrapper) > 0L)
+        if (msgService.count(wrapper) > 0L) {
+            sendMsgAckPacket(ctx, chatMsg);
             return;
+        }
 
         FriendMsg msg = toFriendMsg(chatMsg);
         Long msgSeq = redisService.getSingleMsgSeq();
         msg.setMsgSeq(msgSeq);
-        msgService.save(msg);
+        // 入库成功，发送MsgAck包
+        if (msgService.save(msg))
+            sendMsgAckPacket(ctx, chatMsg);
 
         ChatMsgProto.ChatMsg newChatMsg = chatMsg.toBuilder().setMsgSeq(msgSeq).build();
 
@@ -102,17 +98,23 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         }
     }
 
-    private void handleGroupChatMsg(ChatMsgProto.ChatMsg msg, ChannelHandlerContext ctx) {
+    private void handleGroupChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
         // 1. 根据消息id检查是否已保存，防止重复保存同一消息，已保存则返回
-        long groupId = msg.getToId();
-        if (redisService.msgExist(groupId, msg.getMsgId()))
+        long groupId = chatMsg.getToId();
+        if (redisService.msgExist(groupId, chatMsg.getMsgId())) {
+            sendMsgAckPacket(ctx, chatMsg);
             return;
+        }
         // 2. 使用redis事务同时保存消息id和消息记录
         // 设置消息序列号
-        ChatMsgProto.ChatMsg msgToSend = msg.toBuilder().setMsgSeq(redisService.getGroupMsgSeq(groupId)).build();
+        ChatMsgProto.ChatMsg msgToSend = chatMsg.toBuilder().setMsgSeq(redisService.getGroupMsgSeq(groupId)).build();
         GroupMsgDTO groupMsgDTO = toGroupMsgDTO(msgToSend);
+        /*
+        * 该方法的操作包括：存消息，存消息id，更新last_msgSeq（一个事务中执行）
+        * */
         redisService.saveGroupMsg(groupMsgDTO);
-
+        // 入库后发送MsgAck包
+        sendMsgAckPacket(ctx, chatMsg);
 
         /*
         * 3. 转发消息到在线群成员
@@ -131,6 +133,22 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
                 channel.writeAndFlush(packet);
             }
         }
+    }
+
+    /**
+     * 发送MsgAck包；
+     * 在消息入库（单群聊）后发送给客户端
+     * @param ctx
+     * @param msg
+     */
+    private void sendMsgAckPacket(ChannelHandlerContext ctx, ChatMsgProto.ChatMsg msg) {
+        MsgAckProto.MsgAck msgAck = MsgAckProto.MsgAck.newBuilder()
+                .setSenderUid(IMUtil.getOnlineUserId(ctx.channel()))
+                .setToId(msg.getToId())
+                .setMsgId(msg.getMsgId())
+                .build();
+        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.MSGACK_TYPE, null, msgAck);
+        ctx.channel().writeAndFlush(packet);
     }
 
     private FriendMsg toFriendMsg(ChatMsgProto.ChatMsg chatMsg) {

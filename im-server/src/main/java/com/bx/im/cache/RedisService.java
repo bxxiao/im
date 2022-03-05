@@ -127,11 +127,10 @@ public interface RedisService {
 
 
     /**
-     * 根据最后消息序号拉取在指定群的所有新消息
-     * @param LastMsgSeq 最后已收到的消息序号
+     * 拉取在指定群的所有新消息，并拉取新消息前的10条消息
      * @return
      */
-    List<GroupMsgDTO> getNewGroupMsgs(Long LastMsgSeq, Long groupId);
+    List<GroupMsgDTO> getNewGroupMsgs(Long uid, Long groupId);
 
     /**
      * 根据消息id判断消息是否已存在
@@ -147,5 +146,14 @@ public interface RedisService {
      * @return
      */
     Set<Long> getGroupOnlineUsers(long groupId);
+
+    /**
+     * 更新用户在指定群的last_msgSeq，
+     * 只有给定序号（seq）大于当前序号才更新
+     * @param seq
+     * @param groupId
+     * @param uid
+     */
+    void updateLastSeq(Long seq, Long groupId, Long uid);
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

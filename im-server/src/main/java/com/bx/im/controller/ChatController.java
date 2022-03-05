@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api//chat")
+@RequestMapping("/api/chat")
 public class ChatController {
     @Autowired
     private ChatService chatService;
@@ -50,5 +50,11 @@ public class ChatController {
             return CommonResult.success(ResultEnum.SUCCESS, dto);
         else
             return CommonResult.failed(ResultEnum.FAILD);
+    }
+
+    @PostMapping("/updateLastSeq")
+    public CommonResult updateLastSeq(Long lastSeq, Long groupId, Long uid) {
+        chatService.updateLastSeq(lastSeq, groupId, uid);
+        return CommonResult.success(ResultEnum.SUCCESS, null);
     }
 }

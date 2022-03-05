@@ -13,6 +13,6 @@ public class ChatMsgDTO {
     private String content;
     // 时间的ISO 8601格式对应的字符串
     private String time;
-    // 针对单聊
+    // 仅对单聊
     private Boolean hasRead;
 }

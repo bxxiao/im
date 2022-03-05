@@ -4,16 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
-import com.bx.im.entity.ChatSession;
-import com.bx.im.entity.FriendMsg;
-import com.bx.im.entity.GroupInfo;
-import com.bx.im.entity.User;
+import com.bx.im.entity.*;
 import com.bx.im.server.ChannelContext;
 import com.bx.im.service.ChatService;
-import com.bx.im.service.bean.IChatSessionService;
-import com.bx.im.service.bean.IFriendMsgService;
-import com.bx.im.service.bean.IGroupInfoService;
-import com.bx.im.service.bean.IUserService;
+import com.bx.im.service.bean.*;
 import com.bx.im.util.IMConstant;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +33,9 @@ public class ChatServiceImpl implements ChatService {
 
     @Autowired
     private IGroupInfoService groupInfoService;
+
+    @Autowired
+    private IGroupUsersService groupUsersService;
 
     /*
      * TODO：目前只针对单聊会话，群聊 to be continued
@@ -105,12 +102,15 @@ public class ChatServiceImpl implements ChatService {
             Collections.reverse(msgDTOS);
             result.setMsgs(msgDTOS);
         } else if (type == IMConstant.GROUP_CHAT_TYPE) {
-            // 获取用户在该群的lastMsgSeq
-            Long groupLastMsgSeq = redisService.getGroupLastMsgSeq(uid, toId);
-            // 根据lastMsgSeq获取全部的新消息
-            List<GroupMsgDTO> groupMsgs = redisService.getNewGroupMsgs(groupLastMsgSeq, toId);
+            // 根据lastMsgSeq获取全部的新消息跟10条旧消息
+            List<GroupMsgDTO> groupMsgs = redisService.getNewGroupMsgs(uid, toId);
             List<ChatMsgDTO> collect = groupMsgs.stream().map(item -> toChatMsgDTO(item)).collect(Collectors.toList());
             result.setMsgs(collect);
+
+            // TODO：若群成员过多，在前端按需请求更好？
+            // 获取群成员的头像信息
+            Map<Long, String> avatarMap = queryGroupAvatarMap(toId);
+            result.setAvatarMap(avatarMap);
         } else
             return null;
 
@@ -120,6 +120,9 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatSessionDTO createSession(Long uid, Long toId, int type) {
         ChatSession entity = new ChatSession();
+        /*
+        * 返回的dto只需要包含avatar和name
+        * */
         ChatSessionDTO dto = new ChatSessionDTO();
 
         entity.setUserId(uid);
@@ -134,13 +137,23 @@ public class ChatServiceImpl implements ChatService {
             dto.setAvatar(toUser.getAvatar());
             entity.setToName(toUser.getName());
             entity.setToAvatar(toUser.getAvatar());
-            // TODO:群聊会话
         } else {
-
+            QueryWrapper<GroupInfo> wrapper = new QueryWrapper<>();
+            wrapper.eq("id", toId).select("name", "avatar");
+            GroupInfo info = groupInfoService.getOne(wrapper);
+            dto.setName(info.getName());
+            dto.setAvatar(info.getAvatar());
+            entity.setToName(info.getName());
+            entity.setToAvatar(info.getAvatar());
         }
 
         sessionService.save(entity);
         return dto;
+    }
+
+    @Override
+    public void updateLastSeq(Long seq, Long groupId, Long uid) {
+        redisService.updateLastSeq(seq, groupId, uid);
     }
 
     /**
@@ -285,6 +298,27 @@ public class ChatServiceImpl implements ChatService {
         }
 
         return map;
+    }
+
+    private Map<Long, String> queryGroupAvatarMap(Long groupId) {
+        Map<Long, String> avatarMap = new HashMap<>();
+        QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
+        wrapper.eq("group_id", groupId).select("user_id");
+        // 查询群所有成员的id
+        List<Long> userIds = groupUsersService.listMaps(wrapper)
+                .stream()
+                .map(map -> (Long) (map.get("user_id")))
+                .collect(Collectors.toList());
+        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+        wrapper1.in("id", userIds).select("id", "avatar");
+
+        List<Map<String, Object>> avatarMapList = userService.listMaps(wrapper1);
+        avatarMapList.forEach(map -> {
+            Long uid = (Long) map.get("id");
+            String avatar = (String) map.get("avatar");
+            avatarMap.put(uid, avatar);
+        });
+        return avatarMap;
     }
 
     private ChatSessionDTO toChatSessionDTO(ChatSession entity) {

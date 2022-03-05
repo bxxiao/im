@@ -119,11 +119,14 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public List<GroupMsgDTO> getNewGroupMsgs(Long lastMsgSeq, Long groupId) {
+    public List<GroupMsgDTO> getNewGroupMsgs(Long uid, Long groupId) {
+        Long lastMsgSeq = this.getGroupLastMsgSeq(uid, groupId);
         List<GroupMsgDTO> list = new ArrayList<>();
-        Set<GroupMsgDTO> set = redisTemplate.opsForZSet().rangeByScore(GROUP_MSGS_PRE + groupId, lastMsgSeq + 1, Double.MAX_VALUE);
+        // [...] （左右闭区间）
+        Set<GroupMsgDTO> set = redisTemplate.opsForZSet().rangeByScore(GROUP_MSGS_PRE + groupId, lastMsgSeq - 9, Double.MAX_VALUE);
         /*
         * 返回的set类型是LinkedHashSet，所以遍历速度很快
+        * 且会按从redis中取出的score顺序遍历，所以不用额外进行排序操作
         * */
         // System.out.println(set.getClass().getName());
         Iterator<GroupMsgDTO> iterator = set.iterator();
@@ -162,6 +165,13 @@ public class RedisServiceImpl implements RedisService {
         while (iterator.hasNext())
             set.add(iterator.next().longValue());
         return set;
+    }
+
+    @Override
+    public void updateLastSeq(Long seq, Long groupId, Long uid) {
+        Long lastMsgSeq = this.getGroupLastMsgSeq(uid, groupId);
+        if (seq > lastMsgSeq)
+            redisTemplate.opsForHash().put(USER_LAST_MSG_SEQ_PRE + uid, groupId.toString(), seq.toString());
     }
 
 
