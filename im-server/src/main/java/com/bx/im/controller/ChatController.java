@@ -1,5 +1,6 @@
 package com.bx.im.controller;
 
+import com.bx.im.dto.ChatMsgDTO;
 import com.bx.im.dto.ChatPageDTO;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.ResultEnum;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -56,5 +59,11 @@ public class ChatController {
     public CommonResult updateLastSeq(Long lastSeq, Long groupId, Long uid) {
         chatService.updateLastSeq(lastSeq, groupId, uid);
         return CommonResult.success(ResultEnum.SUCCESS, null);
+    }
+
+    @GetMapping("/loadMsgs")
+    public CommonResult<List<ChatMsgDTO>> loadMsgs(Long uid, Long toId, int type, Long msgSeq) {
+        List<ChatMsgDTO> msgs =  chatService.loadMsgs(uid, toId, type, msgSeq);
+        return CommonResult.success(ResultEnum.SUCCESS, msgs);
     }
 }

@@ -44,7 +44,6 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ChatMsgProto.ChatMsg msg) throws Exception {
-
         int msgType = msg.getType();
         switch (msgType) {
             // 单聊
@@ -59,9 +58,8 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
     }
 
     /*
-     * 连接关闭，则离线
+     * 连接关闭，则离线处理
      * */
-
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         Long uid = ctx.channel().attr(ChannelContext.SESSION_KEY).get().getId();
@@ -69,11 +67,6 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         redisService.userOffline(uid);
     }
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
-        /*
-        * 若消息已存在，则停止。
-        * 前端接收不到MsgAck包，重新发送消息时会出现这种情况
-        * 【这部分代码可以移到channelRead0中】
-        * */
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
         wrapper.eq("msg_id", chatMsg.getMsgId());
         if (msgService.count(wrapper) > 0L) {
@@ -82,17 +75,18 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         }
 
         FriendMsg msg = toFriendMsg(chatMsg);
+        // 获取序列号
         Long msgSeq = redisService.getSingleMsgSeq();
         msg.setMsgSeq(msgSeq);
         // 入库成功，发送MsgAck包
         if (msgService.save(msg))
             sendMsgAckPacket(ctx, chatMsg);
 
-        ChatMsgProto.ChatMsg newChatMsg = chatMsg.toBuilder().setMsgSeq(msgSeq).build();
-
+        // 若在线，则进行转发
         Long toUid = msg.getToUid();
         Channel targetChannel = ChannelContext.getOnlineChannel(toUid);
         if (targetChannel != null) {
+            ChatMsgProto.ChatMsg newChatMsg = chatMsg.toBuilder().setMsgSeq(msgSeq).build();
             IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.CHATMSG_TYPE, null, newChatMsg);
             targetChannel.writeAndFlush(packet);
         }
@@ -125,13 +119,12 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         groupOnlineUsers.remove(IMUtil.getOnlineUserId(ctx.channel()));
 
         Iterator<Long> iterator = groupOnlineUsers.iterator();
+        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.CHATMSG_TYPE, null, msgToSend);
         while (iterator.hasNext()) {
             Long uid = iterator.next();
             Channel channel = ChannelContext.getOnlineChannel(uid);
-            if (channel != null) {
-                IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.CHATMSG_TYPE, null, msgToSend);
+            if (channel != null)
                 channel.writeAndFlush(packet);
-            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.bx.im.service;
 
+import com.bx.im.dto.ChatMsgDTO;
 import com.bx.im.dto.ChatPageDTO;
 import com.bx.im.dto.ChatSessionDTO;
 import com.bx.im.dto.DialogueDataDTO;
@@ -42,4 +43,6 @@ public interface ChatService {
      * @param uid
      */
     void updateLastSeq(Long seq, Long groupId, Long uid);
+
+    List<ChatMsgDTO> loadMsgs(Long uid, Long toId, int type, Long msgSeq);
 }

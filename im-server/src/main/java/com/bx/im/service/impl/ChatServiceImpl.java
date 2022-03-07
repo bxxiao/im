@@ -37,9 +37,6 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     private IGroupUsersService groupUsersService;
 
-    /*
-     * TODO：目前只针对单聊会话，群聊 to be continued
-     * */
     @Override
     public ChatPageDTO getChatPageData(Long uid) {
         ChatPageDTO chatPageDTO = new ChatPageDTO();
@@ -61,12 +58,13 @@ public class ChatServiceImpl implements ChatService {
                 sessionList2.add(dto);
         }
 
+        // 分别处理单群聊会话
         dealSingleTypeSessions(sessionList1, uid);
         dealGroupTypeSessions(sessionList2, uid);
 
         sessionList1.addAll(sessionList2);
-        // 查询当前用户的信息
         chatPageDTO.setSessionList(sessionList1);
+        // 查询当前用户的信息
         User user = userService.getById(uid);
         UserDTO userDTO = new UserDTO();
         BeanUtils.copyProperties(user, userDTO);
@@ -84,6 +82,7 @@ public class ChatServiceImpl implements ChatService {
         if (type == IMConstant.SINGLE_CHAT_TYPE) {
             result.setIsOnline(ChannelContext.getOnlineChannel(toId) != null);
             QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
+            // 查询后20条消息
             /*
              * select * from friend_msg
              * where ((sender_uid = ? AND to_uid = ?) OR (sender_uid = ? AND to_uid = ?))
@@ -99,6 +98,7 @@ public class ChatServiceImpl implements ChatService {
                 ChatMsgDTO msgDTO = toChatMsgDTO(msg);
                 return msgDTO;
             }).collect(Collectors.toList());
+            // 因为是倒序查询出来，这里再进行一次反转
             Collections.reverse(msgDTOS);
             result.setMsgs(msgDTOS);
         } else if (type == IMConstant.GROUP_CHAT_TYPE) {
@@ -154,6 +154,33 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public void updateLastSeq(Long seq, Long groupId, Long uid) {
         redisService.updateLastSeq(seq, groupId, uid);
+    }
+
+    @Override
+    public List<ChatMsgDTO> loadMsgs(Long uid, Long toId, int type, Long msgSeq) {
+        if (type == IMConstant.SINGLE_CHAT_TYPE) {
+            QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
+            // SELECT * FROM friend_msg
+            // WHERE (msg_seq < ? AND ((sender_uid = ? AND to_uid = ?) OR (sender_uid = ? AND to_uid = ?)))
+            // ORDER BY msg_seq DESC
+            // limit 5
+            wrapper.lt("msg_seq", msgSeq)
+                    .and(i -> i.or(j -> j.eq("sender_uid", uid).eq("to_uid", toId)).or(j -> j.eq("sender_uid", toId).eq("to_uid", uid)))
+                    .orderByDesc("msg_seq")
+                    .last("limit 5");
+            List<FriendMsg> list = friendMsgService.list(wrapper);
+            if (list.size() > 0) {
+                Collections.reverse(list);
+                List<ChatMsgDTO> collect = list.stream()
+                        .map(msgEntity -> toChatMsgDTO(msgEntity))
+                        .collect(Collectors.toList());
+                System.out.println(collect);
+                return collect;
+            }
+        } else if (type == IMConstant.GROUP_CHAT_TYPE) {
+
+        }
+        return null;
     }
 
     /**
@@ -291,8 +318,8 @@ public class ChatServiceImpl implements ChatService {
         // 2 根据每个last_seq到对应群消息的zset中查询有多少消息未读
 
         for (Map.Entry<Long, Long> entry : userLastSeqMap.entrySet()) {
-            Long gid = entry.getKey().longValue();
-            Long lastSeq = entry.getValue().longValue();
+            Long gid = entry.getKey();
+            Long lastSeq = entry.getValue();
             Long unReadCount = redisService.getGroupUnReadCount(gid, lastSeq);
             map.put(gid, unReadCount);
         }

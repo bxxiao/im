@@ -11,6 +11,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +26,20 @@ public class Test {
         // testJJWTExpiration();
         // testJwtUtil();
 
-        String token = "eyJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiIyIiwiZXhwIjoxNjQ2MDYwMzUxfQ.69yP1lICZo7OG8-2GZxegiHK96AETsqC-leoMA_RAuo";
-        Jwts.parser().setSigningKey("eyJ1aWQiOjY2LCJuYW1lIjoi5byg5LiJIiwiZXhwIjoxNjQ2MDUwMDczfQ").parseClaimsJws(token).getBody();
+
+    }
+
+    private static int testTryCatch() {
+        try {
+            System.out.println("tyr block");
+            double a = 1 / 0;
+        } catch (Exception e) {
+            System.out.println("catch block");
+            return 1;
+        } finally {
+            System.out.println("finally block");
+            return 2;
+        }
     }
 
     private static void testJwtUtil() {
