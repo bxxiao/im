@@ -19,4 +19,9 @@ public class Session {
      * 个性签名/自我简介
      */
     private String intro;
+
+    @Override
+    public String toString() {
+        return "User{" + id + "-" + name + "}";
+    }
 }

@@ -2,6 +2,7 @@ package com.bx.im.server.codec;
 
 import com.bx.im.proto.*;
 import com.bx.im.server.ChannelContext;
+import com.bx.im.util.IMUtil;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
@@ -56,15 +57,13 @@ public class WSFrameDecoder extends MessageToMessageDecoder<WebSocketFrame> {
         content.readBytes(bytes);
 
         IMPacketProto.IMPacket packet = IMPacketProto.IMPacket.parseFrom(bytes);
-
         int packetType = packet.getType();
-        // 第一次连接时发送一个LoginProto包进行登录
-        // if (packetType != 0) {
-        //     if (!ChannelContext.isLogin(ctx.channel())) {
-        //         ctx.channel().writeAndFlush(new CloseWebSocketFrame());
-        //         return;
-        //     }
-        // }
+        // 心跳包处理
+        if (packetType == ProtoTypeConstant.PING_PACKET) {
+            IMPacketProto.IMPacket pongPacket = IMUtil.createPongPacket();
+            ctx.channel().writeAndFlush(pongPacket);
+            return;
+        }
 
         ByteString data = packet.getData();
 

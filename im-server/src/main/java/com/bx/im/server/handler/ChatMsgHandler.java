@@ -57,15 +57,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         }
     }
 
-    /*
-     * 连接关闭，则离线处理
-     * */
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Long uid = ctx.channel().attr(ChannelContext.SESSION_KEY).get().getId();
-        ChannelContext.offLine(uid);
-        redisService.userOffline(uid);
-    }
+
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
         wrapper.eq("msg_id", chatMsg.getMsgId());

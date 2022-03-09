@@ -2,6 +2,7 @@ package com.bx.im.server;
 
 import com.bx.im.server.codec.IMPacketEncoder;
 import com.bx.im.server.handler.ChatMsgHandler;
+import com.bx.im.server.handler.ConnectionHandler;
 import com.bx.im.server.handler.LoginHandler;
 import com.bx.im.server.codec.WSFrameDecoder;
 import com.bx.im.server.handler.MsgReadHandler;
@@ -11,11 +12,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class WSChannelInitializer extends ChannelInitializer<NioSocketChannel> implements ApplicationContextAware {
@@ -46,12 +50,15 @@ public class WSChannelInitializer extends ChannelInitializer<NioSocketChannel> i
         pipeline.addLast(new HttpObjectAggregator(65535));
         pipeline.addLast(new ChunkedWriteHandler());
 
+        // 注意IdleStateHandler要放在最前，否则收到消息时没有可能不会经过该Handler，导致不能正确计时
+        pipeline.addLast(new IdleStateHandler(60, 0, 0, TimeUnit.SECONDS));
         // Netty WebSocket协议处理器
         pipeline.addLast(new WebSocketServerProtocolHandler("/ws", null, true, 10 * 1024));
         pipeline.addLast(new WSFrameDecoder());
         pipeline.addLast(this.loginHandler);
         pipeline.addLast(appContext.getBean(ChatMsgHandler.class));
         pipeline.addLast(appContext.getBean(MsgReadHandler.class));
+        pipeline.addLast(appContext.getBean(ConnectionHandler.class));
 
         pipeline.addLast(new IMPacketEncoder());
 
