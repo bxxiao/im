@@ -28,4 +28,4 @@ jwt:
   expiration: 86400 #60*60*24 1天
 logging:
   level:
-    com.bx.im.mapper.*: debug
+    com.bx.im.mapper.*: info

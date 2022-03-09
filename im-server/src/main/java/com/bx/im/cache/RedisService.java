@@ -155,5 +155,13 @@ public interface RedisService {
      * @param uid
      */
     void updateLastSeq(Long seq, Long groupId, Long uid);
+
+    /**
+     * 根据消息序号在指定群记录的zset往前拉取若干消息返回
+     * @param groupId
+     * @param msgSeq
+     * @return
+     */
+    Set<GroupMsgDTO> getHistoryMsgs(Long groupId, Long msgSeq);
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

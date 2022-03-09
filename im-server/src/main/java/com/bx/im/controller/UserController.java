@@ -1,6 +1,7 @@
 package com.bx.im.controller;
 
 import com.bx.im.dto.UserDTO;
+import com.bx.im.service.ChatService;
 import com.bx.im.service.bean.IUserService;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.ResultEnum;
@@ -13,6 +14,9 @@ public class UserController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private ChatService chatService;
 
     @PostMapping("/login")
     public CommonResult<UserDTO> login(String phone, String password) {

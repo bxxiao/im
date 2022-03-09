@@ -123,6 +123,10 @@ public class RedisServiceImpl implements RedisService {
         Long lastMsgSeq = this.getGroupLastMsgSeq(uid, groupId);
         List<GroupMsgDTO> list = new ArrayList<>();
         // [...] （左右闭区间）
+        /*
+        * TODO：可以使用reverseRangeByScore(K key, double min, double max, long offset, long count)来更准确的获取10条旧消息
+        * 若序号不是严格递增的，则使用 lastMsgSeq - 9 不一定能获取到10条消息
+        * */
         Set<GroupMsgDTO> set = redisTemplate.opsForZSet().rangeByScore(GROUP_MSGS_PRE + groupId, lastMsgSeq - 9, Double.MAX_VALUE);
         /*
         * 返回的set类型是LinkedHashSet，所以遍历速度很快
@@ -172,6 +176,17 @@ public class RedisServiceImpl implements RedisService {
         Long lastMsgSeq = this.getGroupLastMsgSeq(uid, groupId);
         if (seq > lastMsgSeq)
             redisTemplate.opsForHash().put(USER_LAST_MSG_SEQ_PRE + uid, groupId.toString(), seq.toString());
+    }
+
+    @Override
+    public Set<GroupMsgDTO> getHistoryMsgs(Long groupId, Long msgSeq) {
+        /*
+        * 0 - msgSeq 反序排列，取前10条
+        * min-max 是左右闭区间，msgSeq要减一
+        * */
+        Set<GroupMsgDTO> set = redisTemplate.opsForZSet().reverseRangeByScore(GROUP_MSGS_PRE + groupId, 0, msgSeq - 1, 0, 10);
+
+        return set;
     }
 
 

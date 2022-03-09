@@ -44,5 +44,13 @@ public interface ChatService {
      */
     void updateLastSeq(Long seq, Long groupId, Long uid);
 
+    /**
+     * 上滑加载消息，根据消息序号往前拉若干消息返回，若没有则返回null
+     * @param uid
+     * @param toId
+     * @param type
+     * @param msgSeq
+     * @return
+     */
     List<ChatMsgDTO> loadMsgs(Long uid, Long toId, int type, Long msgSeq);
 }

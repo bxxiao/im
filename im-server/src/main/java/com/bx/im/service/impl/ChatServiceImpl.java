@@ -167,20 +167,36 @@ public class ChatServiceImpl implements ChatService {
             wrapper.lt("msg_seq", msgSeq)
                     .and(i -> i.or(j -> j.eq("sender_uid", uid).eq("to_uid", toId)).or(j -> j.eq("sender_uid", toId).eq("to_uid", uid)))
                     .orderByDesc("msg_seq")
-                    .last("limit 5");
+                    .last("limit 10");
             List<FriendMsg> list = friendMsgService.list(wrapper);
             if (list.size() > 0) {
                 Collections.reverse(list);
                 List<ChatMsgDTO> collect = list.stream()
                         .map(msgEntity -> toChatMsgDTO(msgEntity))
                         .collect(Collectors.toList());
-                System.out.println(collect);
                 return collect;
             }
         } else if (type == IMConstant.GROUP_CHAT_TYPE) {
-
+            Set<GroupMsgDTO> groupMsgDTOs = redisService.getHistoryMsgs(toId, msgSeq);
+            if (groupMsgDTOs.size() > 0) {
+                List<ChatMsgDTO> msgs = toAescMsgs(groupMsgDTOs);
+                return msgs;
+            }
         }
         return null;
+    }
+
+    /*
+    * 将反序的groupMsgSet转为正序的List
+    * */
+    private List<ChatMsgDTO> toAescMsgs(Set<GroupMsgDTO> groupMsgSet) {
+        /*
+        * Set是一个LinkedHashSet，所以查出的消息是按反序排列的，转为List后进行一次反转返回
+        * */
+        List<ChatMsgDTO> collect = groupMsgSet.stream().map(msg -> toChatMsgDTO(msg)).collect(Collectors.toList());
+        Collections.reverse(collect);
+
+        return collect;
     }
 
     /**

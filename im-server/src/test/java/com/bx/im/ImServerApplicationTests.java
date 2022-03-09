@@ -22,9 +22,8 @@ import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class ImServerApplicationTests {
@@ -157,6 +156,26 @@ class ImServerApplicationTests {
     }
 
     // =======================Test Project API=========================
+
+    @Test
+    public void testGetHistoryMsgs(){
+        Set<GroupMsgDTO> historyMsgs = redisService.getHistoryMsgs(1L, 11L);
+        Iterator<GroupMsgDTO> iterator = historyMsgs.iterator();
+        while (iterator.hasNext()) {
+            GroupMsgDTO msg = iterator.next();
+            System.out.println(msg.getMsgSeq() + " " + msg.getContent());
+        }
+        System.out.println("\n\n\n");
+
+        List<ChatMsgDTO> collect = historyMsgs.stream().map(msg -> {
+            ChatMsgDTO dto = new ChatMsgDTO();
+            dto.setMsgSeq(msg.getMsgSeq());
+            dto.setContent(msg.getContent());
+            return dto;
+        }).collect(Collectors.toList());
+        Collections.reverse(collect);
+        collect.forEach(i -> System.out.println(i.getMsgSeq() + " " + i.getContent()));
+    }
 
     @Test
     public void testGetGroupOnlineUsers(){
