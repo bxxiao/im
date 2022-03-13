@@ -1,12 +1,11 @@
-package com.bx.im.server.handler;
+package com.bx.im.websocket.handler;
 
 import com.bx.im.cache.RedisService;
 import com.bx.im.entity.Session;
 import com.bx.im.entity.User;
-import com.bx.im.proto.ChatMsgProto;
 import com.bx.im.proto.IMPacketProto;
 import com.bx.im.proto.LoginProto;
-import com.bx.im.server.ChannelContext;
+import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IUserService;
 import com.bx.im.util.IMUtil;
 import com.bx.im.util.JwtUtil;
@@ -15,7 +14,6 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 /*

@@ -1,8 +1,8 @@
-package com.bx.im.server.handler;
+package com.bx.im.websocket.handler;
 
 import com.bx.im.cache.RedisService;
 import com.bx.im.entity.Session;
-import com.bx.im.server.ChannelContext;
+import com.bx.im.websocket.ChannelContext;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;

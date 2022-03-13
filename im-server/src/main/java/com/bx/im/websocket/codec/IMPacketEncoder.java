@@ -1,4 +1,4 @@
-package com.bx.im.server.codec;
+package com.bx.im.websocket.codec;
 
 import com.bx.im.proto.IMPacketProto;
 import io.netty.buffer.ByteBuf;

@@ -1,4 +1,4 @@
-package com.bx.im.server;
+package com.bx.im.websocket;
 
 import com.bx.im.proto.demo.Outter;
 import com.google.protobuf.Parser;

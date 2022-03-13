@@ -1,7 +1,6 @@
-package com.bx.im.server;
+package com.bx.im.websocket;
 
 import com.bx.im.entity.Session;
-import com.bx.im.entity.User;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 

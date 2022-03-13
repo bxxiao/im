@@ -1,4 +1,4 @@
-package com.bx.im.server;
+package com.bx.im.websocket;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;

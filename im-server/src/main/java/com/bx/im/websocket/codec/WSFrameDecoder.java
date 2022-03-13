@@ -1,7 +1,7 @@
-package com.bx.im.server.codec;
+package com.bx.im.websocket.codec;
 
 import com.bx.im.proto.*;
-import com.bx.im.server.ChannelContext;
+import com.bx.im.util.IMConstant;
 import com.bx.im.util.IMUtil;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -10,7 +10,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
 import java.util.HashMap;
@@ -32,11 +31,11 @@ public class WSFrameDecoder extends MessageToMessageDecoder<WebSocketFrame> {
         * 4 - MsgRead
         * 401 - data无内容，表示登录时提交的token错误，发给客户端后channel关闭
         * */
-        parserMap.put(ProtoTypeConstant.LOGIN_TYPE, LoginProto.Login.parser());
-        parserMap.put(ProtoTypeConstant.CHATMSG_TYPE, ChatMsgProto.ChatMsg.parser());
-        parserMap.put(ProtoTypeConstant.MSGACK_TYPE, MsgAckProto.MsgAck.parser());
-        parserMap.put(ProtoTypeConstant.MSGACKNOTICE_TYPE, MsgAckedNoticeProto.MsgAckedNotice.parser());
-        parserMap.put(ProtoTypeConstant.MSGREAD_TYPE, MsgReadProto.MsgRead.parser());
+        parserMap.put(IMConstant.LOGIN_PROTOBUF_TYPE, LoginProto.Login.parser());
+        parserMap.put(IMConstant.CHATMSG_PROTOBUF_TYPE, ChatMsgProto.ChatMsg.parser());
+        parserMap.put(IMConstant.MSGACK_PROTOBUF_TYPE, MsgAckProto.MsgAck.parser());
+        parserMap.put(IMConstant.MSGACKNOTICE_PROTOBUF_TYPE, MsgAckedNoticeProto.MsgAckedNotice.parser());
+        parserMap.put(IMConstant.MSGREAD_PROTOBUF_TYPE, MsgReadProto.MsgRead.parser());
     }
 
     @Override
@@ -59,7 +58,7 @@ public class WSFrameDecoder extends MessageToMessageDecoder<WebSocketFrame> {
         IMPacketProto.IMPacket packet = IMPacketProto.IMPacket.parseFrom(bytes);
         int packetType = packet.getType();
         // 心跳包处理
-        if (packetType == ProtoTypeConstant.PING_PACKET) {
+        if (packetType == IMConstant.PING_PROTOBUF_TYPE) {
             IMPacketProto.IMPacket pongPacket = IMUtil.createPongPacket();
             ctx.channel().writeAndFlush(pongPacket);
             return;

@@ -21,9 +21,11 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
 
-    /*
+    /**
      * 获取会话列表
-     * */
+     * @param uid
+     * @return
+     */
     @GetMapping("/getSessionList")
     public CommonResult<ChatPageDTO> getSessionList(Long uid) {
         ChatPageDTO dto = chatService.getChatPageData(uid);
@@ -55,6 +57,13 @@ public class ChatController {
             return CommonResult.failed(ResultEnum.FAILD);
     }
 
+    /**
+     *
+     * @param lastSeq
+     * @param groupId
+     * @param uid
+     * @return
+     */
     @PostMapping("/updateLastSeq")
     public CommonResult updateLastSeq(Long lastSeq, Long groupId, Long uid) {
         chatService.updateLastSeq(lastSeq, groupId, uid);

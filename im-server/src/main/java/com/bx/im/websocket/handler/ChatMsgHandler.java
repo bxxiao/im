@@ -1,4 +1,4 @@
-package com.bx.im.server.handler;
+package com.bx.im.websocket.handler;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bx.im.cache.RedisService;
@@ -8,8 +8,9 @@ import com.bx.im.proto.ChatMsgProto;
 import com.bx.im.proto.IMPacketProto;
 import com.bx.im.proto.MsgAckProto;
 import com.bx.im.service.bean.IFriendMsgService;
+import com.bx.im.util.IMConstant;
 import com.bx.im.util.IMUtil;
-import com.bx.im.server.ChannelContext;
+import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IUserFriendService;
 import com.bx.im.service.bean.IUserService;
 import io.netty.channel.Channel;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 @Component
@@ -79,7 +79,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         Channel targetChannel = ChannelContext.getOnlineChannel(toUid);
         if (targetChannel != null) {
             ChatMsgProto.ChatMsg newChatMsg = chatMsg.toBuilder().setMsgSeq(msgSeq).build();
-            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.CHATMSG_TYPE, null, newChatMsg);
+            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, newChatMsg);
             targetChannel.writeAndFlush(packet);
         }
     }
@@ -111,7 +111,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         groupOnlineUsers.remove(IMUtil.getOnlineUserId(ctx.channel()));
 
         Iterator<Long> iterator = groupOnlineUsers.iterator();
-        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.CHATMSG_TYPE, null, msgToSend);
+        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, msgToSend);
         while (iterator.hasNext()) {
             Long uid = iterator.next();
             Channel channel = ChannelContext.getOnlineChannel(uid);
@@ -132,7 +132,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
                 .setToId(msg.getToId())
                 .setMsgId(msg.getMsgId())
                 .build();
-        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMUtil.MSGACK_TYPE, null, msgAck);
+        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.MSGACK_PROTOBUF_TYPE, null, msgAck);
         ctx.channel().writeAndFlush(packet);
     }
 

@@ -32,9 +32,7 @@ public class FriendMsgServiceImpl extends ServiceImpl<FriendMsgMapper, FriendMsg
                 .select("sender_uid", "count(*) as num");
         List<Map<String, Object>> mapList = this.listMaps(wrapper);
 
-        mapList.forEach(map -> {
-            result.put((Long) map.get("sender_uid"), (Long) map.get("num"));
-        });
+        mapList.forEach(map -> result.put((Long) map.get("sender_uid"), (Long) map.get("num")));
 
         return result;
     }

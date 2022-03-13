@@ -1,11 +1,11 @@
-package com.bx.im.server.handler;
+package com.bx.im.websocket.handler;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bx.im.entity.FriendMsg;
 import com.bx.im.proto.IMPacketProto;
 import com.bx.im.proto.MsgReadProto;
-import com.bx.im.server.ChannelContext;
-import com.bx.im.server.codec.ProtoTypeConstant;
+import com.bx.im.util.IMConstant;
+import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IFriendMsgService;
 import com.bx.im.util.IMUtil;
 import io.netty.channel.Channel;
@@ -42,7 +42,7 @@ public class MsgReadHandler extends SimpleChannelInboundHandler<MsgReadProto.Msg
         long toId = msg.getToId();
         Channel toUser = ChannelContext.getOnlineChannel(toId);
         if (toUser != null) {
-            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(ProtoTypeConstant.MSGREAD_TYPE, null, msg);
+            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.MSGREAD_PROTOBUF_TYPE, null, msg);
             toUser.writeAndFlush(packet);
         }
     }

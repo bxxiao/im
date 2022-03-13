@@ -1,11 +1,11 @@
-package com.bx.im.server;
+package com.bx.im.websocket;
 
-import com.bx.im.server.codec.IMPacketEncoder;
-import com.bx.im.server.handler.ChatMsgHandler;
-import com.bx.im.server.handler.ConnectionHandler;
-import com.bx.im.server.handler.LoginHandler;
-import com.bx.im.server.codec.WSFrameDecoder;
-import com.bx.im.server.handler.MsgReadHandler;
+import com.bx.im.websocket.codec.IMPacketEncoder;
+import com.bx.im.websocket.handler.ChatMsgHandler;
+import com.bx.im.websocket.handler.ConnectionHandler;
+import com.bx.im.websocket.handler.LoginHandler;
+import com.bx.im.websocket.codec.WSFrameDecoder;
+import com.bx.im.websocket.handler.MsgReadHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.nio.NioSocketChannel;

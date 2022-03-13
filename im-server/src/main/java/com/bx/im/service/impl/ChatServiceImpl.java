@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
 import com.bx.im.entity.*;
-import com.bx.im.server.ChannelContext;
+import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.ChatService;
 import com.bx.im.service.bean.*;
 import com.bx.im.util.IMConstant;
@@ -206,7 +206,7 @@ public class ChatServiceImpl implements ChatService {
      * @param uid
      */
     private void dealSingleTypeSessions(List<ChatSessionDTO> sessionList, Long uid) {
-        // 2. 查询未读消息数
+        // 1. 查询未读消息数
         // <userId - unread num>
         Map<Long, Long> unreadMap = friendMsgService.getAllUnreadNum(uid);
         sessionList.forEach(session -> {
@@ -241,7 +241,7 @@ public class ChatServiceImpl implements ChatService {
             }
         }
 
-        // 3. 为每个会话（单聊）查询最后一条消息
+        // 2. 为每个会话（单聊）查询最后一条消息
         sessionList.forEach(dto -> {
             QueryWrapper<FriendMsg> msgWrapper = new QueryWrapper<>();
             /*
