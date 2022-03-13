@@ -26,4 +26,13 @@ public class UserController {
         else
             return CommonResult.success(ResultEnum.SUCCESS, dto);
     }
+
+    @GetMapping("/info")
+    public CommonResult<UserDTO> getUserInfo(Long uid) {
+        UserDTO info = userService.getUserInfo(uid);
+        if (info != null)
+            return CommonResult.success(ResultEnum.SUCCESS, info);
+        else
+            return CommonResult.failed(ResultEnum.FAILD);
+    }
 }

@@ -1,7 +1,7 @@
 package com.bx.im.service.bean;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bx.im.entity.FriendAsk;
+import com.bx.im.entity.Apply;
 
 /**
  * <p>
@@ -9,8 +9,8 @@ import com.bx.im.entity.FriendAsk;
  * </p>
  *
  * @author bx
- * @since 2022-01-31
+ * @since 2022-03-13
  */
-public interface IFriendAskService extends IService<FriendAsk> {
+public interface IApplyService extends IService<Apply> {
 
 }

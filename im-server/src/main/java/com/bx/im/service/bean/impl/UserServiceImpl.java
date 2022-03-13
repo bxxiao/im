@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author bx
@@ -37,5 +37,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return userDTO;
         }
         return null;
+    }
+
+    @Override
+    public UserDTO getUserInfo(Long uid) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", uid).select("id", "name", "phone", "avatar");
+        User user = this.getOne(wrapper);
+        if (user == null)
+            return null;
+
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setAvatar(user.getAvatar());
+        dto.setPhone(user.getPhone());
+
+        return dto;
     }
 }

@@ -15,4 +15,6 @@ import com.bx.im.entity.User;
 public interface IUserService extends IService<User> {
 
     UserDTO login(String phone, String password);
+
+    UserDTO getUserInfo(Long uid);
 }

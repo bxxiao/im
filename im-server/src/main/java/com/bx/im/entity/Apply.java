@@ -2,7 +2,6 @@ package com.bx.im.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -13,10 +12,22 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author bx
- * @since 2022-01-31
+ * @since 2022-03-13
  */
-@TableName("friend_ask")
-public class FriendAsk implements Serializable {
+public class Apply implements Serializable {
+
+    /*
+    * status对应的3种状态
+    * */
+    public static final int DEALING = 0;
+    public static final int AGREED = 1;
+    public static final int REJECTED = 2;
+
+    /*
+    * 2种类型：好友申请、群聊邀请
+    * */
+    public static final int FRIEND_APPLY = 1;
+    public static final int GROUP_APPLY = 2;
 
     private static final long serialVersionUID = 1L;
 
@@ -28,9 +39,19 @@ public class FriendAsk implements Serializable {
     private Long toUid;
 
     /**
+     * 若类型是群聊邀请，表示对应的群id
+     */
+    private Long groupId;
+
+    /**
+     * 1-好友申请；2-群聊邀请
+     */
+    private Integer type;
+
+    /**
      * 0-已发出；1-已同意；2-已拒绝
      */
-    private Boolean status;
+    private Integer status;
 
     private LocalDateTime time;
 
@@ -59,11 +80,27 @@ public class FriendAsk implements Serializable {
         this.toUid = toUid;
     }
 
-    public Boolean getStatus() {
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
+    }
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 
@@ -77,10 +114,12 @@ public class FriendAsk implements Serializable {
 
     @Override
     public String toString() {
-        return "FriendAsk{" +
+        return "Apply{" +
         "id=" + id +
         ", senderUid=" + senderUid +
         ", toUid=" + toUid +
+        ", groupId=" + groupId +
+        ", type=" + type +
         ", status=" + status +
         ", time=" + time +
         "}";

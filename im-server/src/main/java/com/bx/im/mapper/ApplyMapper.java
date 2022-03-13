@@ -1,7 +1,7 @@
 package com.bx.im.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bx.im.entity.FriendAsk;
+import com.bx.im.entity.Apply;
 
 /**
  * <p>
@@ -9,8 +9,8 @@ import com.bx.im.entity.FriendAsk;
  * </p>
  *
  * @author bx
- * @since 2022-01-31
+ * @since 2022-03-13
  */
-public interface FriendAskMapper extends BaseMapper<FriendAsk> {
+public interface ApplyMapper extends BaseMapper<Apply> {
 
 }
