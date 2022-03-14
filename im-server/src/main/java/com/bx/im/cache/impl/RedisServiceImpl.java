@@ -46,6 +46,11 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public Boolean isUserOnline(Long id) {
+        return redisTemplate.opsForSet().isMember(ONLINE_USERS_KEY, id);
+    }
+
+    @Override
     public Long getSingleMsgSeq() {
         Long increment = redisTemplate.opsForValue().increment(SINGE_MSG_SEQ_KEY);
         return increment;

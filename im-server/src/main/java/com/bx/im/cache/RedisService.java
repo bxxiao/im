@@ -69,6 +69,8 @@ public interface RedisService {
      */
     void remove(String key);
 
+    Boolean isUserOnline(Long id);
+
 
     //======================通用<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -163,5 +165,6 @@ public interface RedisService {
      * @return
      */
     Set<GroupMsgDTO> getHistoryMsgs(Long groupId, Long msgSeq);
+
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

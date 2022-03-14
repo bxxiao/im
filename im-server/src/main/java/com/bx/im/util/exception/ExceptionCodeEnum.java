@@ -8,7 +8,9 @@ public enum  ExceptionCodeEnum implements IExceptionCode {
     SERVER_ERROR(400, "服务器出现错误，请稍后再试"),
     REQUEST_ERROR(4001, "请求处理错误，请稍后再试"),
     NO_SUCH_TYPE(1001, "指定的类型错误"),
-    LOGIN_FAILED(1002, "登录失败，密码或账号错误");
+    LOGIN_FAILED(1002, "登录失败，密码或账号错误"),
+    APPLY_NOT_EXIST_OR_DEALED(1003, "申请不存在，或已被处理"),
+    ;
 
 
     private Integer code;

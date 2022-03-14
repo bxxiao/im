@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public CommonResult handleException(HttpServletRequest request, HttpServletResponse response, Exception exception) {
-        System.out.println(exception.getMessage());
+        exception.printStackTrace();
         return CommonResult.error(ExceptionCodeEnum.SERVER_ERROR);
     }
 }

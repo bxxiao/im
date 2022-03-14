@@ -9,9 +9,12 @@ import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
 import com.bx.im.entity.ChatSession;
 import com.bx.im.entity.FriendMsg;
+import com.bx.im.entity.UserFriend;
 import com.bx.im.service.ChatService;
+import com.bx.im.service.FriendHandleService;
 import com.bx.im.service.bean.IChatSessionService;
 import com.bx.im.service.bean.IFriendMsgService;
+import com.bx.im.service.bean.IUserFriendService;
 import com.bx.im.service.bean.IUserService;
 import com.bx.im.util.IMConstant;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SpringBootTest
@@ -42,6 +46,21 @@ class ImServerApplicationTests {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private IUserFriendService userFriendService;
+
+    /*
+    * listObjs方法返回一个List，元素是每条记录的第一个值
+    * */
+    @Test
+    public void testMybatisListObjs(){
+        QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
+        wrapper.eq("uid", 2L).select("uid", "friend_uid");
+        // List<Long> list = userFriendService.listObjs(wrapper, userFriend -> ((UserFriend) userFriend).getFriendUid());
+        List<Object> objects = userFriendService.listObjs(wrapper);
+        System.out.println(objects);
+    }
 
     /*
     * 使用entity对象进行查询，根据entity对象的非null值自动拼接where，用and连接
@@ -156,6 +175,17 @@ class ImServerApplicationTests {
     }
 
     // =======================Test Project API=========================
+
+    @Autowired
+    private FriendHandleService friendHandleService;
+
+    @Test
+    public void testListFriends(){
+        List<FriendDTO> dtos = friendHandleService.listFriends(2L);
+        for (FriendDTO dto : dtos) {
+            System.out.println(dto);
+        }
+    }
 
     @Test
     public void testGetHistoryMsgs(){

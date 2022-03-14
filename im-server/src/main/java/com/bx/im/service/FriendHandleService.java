@@ -1,6 +1,8 @@
 package com.bx.im.service;
 
 import com.bx.im.dto.ApplyDTO;
+import com.bx.im.dto.FriendDTO;
+import com.bx.im.dto.GroupDTO;
 
 import java.util.List;
 
@@ -20,4 +22,8 @@ public interface FriendHandleService {
      * @return
      */
     boolean dealApply(Integer id, Integer dealResult);
+
+    List<FriendDTO> listFriends(Long uid);
+
+    List<GroupDTO> listGroups(Long uid);
 }

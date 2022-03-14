@@ -2,13 +2,20 @@ package com.bx.im.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bx.im.cache.RedisService;
 import com.bx.im.dto.ApplyDTO;
+import com.bx.im.dto.FriendDTO;
+import com.bx.im.dto.GroupDTO;
 import com.bx.im.entity.*;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.service.bean.*;
+import com.bx.im.util.exception.ExceptionCodeEnum;
+import com.bx.im.util.exception.IMException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,6 +40,10 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     @Autowired
     private IGroupUsersService groupUsersService;
 
+    @Autowired
+    private RedisService redisService;
+
+
     @Override
     public List<ApplyDTO> listApplys(Long uid) {
         QueryWrapper<Apply> wrapper = new QueryWrapper<>();
@@ -52,23 +63,21 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         return collect;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public boolean dealApply(Integer id, Integer dealResult) {
         // 若对应数据库记录不存在，或已被处理，则返回false
         Apply apply = applyService.getById(id);
         if (apply == null || apply.getStatus() != Apply.DEALING)
-            return false;
+            throw new IMException(ExceptionCodeEnum.APPLY_NOT_EXIST_OR_DEALED);
 
         // 指定的处理类型错误
         /*
         * TODO：在controller进行参数验证
         * */
         if (dealResult == null || (dealResult != Apply.AGREED && dealResult != Apply.REJECTED))
-            return false;
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
 
-        /*
-        * TODO：事务 + 全局异常处理
-        * */
         // 同意添加好友（或接收邀请）
         if (dealResult == Apply.AGREED) {
             // 好友申请
@@ -100,13 +109,57 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 * TODO：发一个新成员入群通知？
                 * */
             } else
-                return false;
+                throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
         }
 
         UpdateWrapper<Apply> wrapper = new UpdateWrapper<>();
         wrapper.eq("id", id).set("status", dealResult);
         applyService.update(wrapper);
         return true;
+    }
+
+    @Override
+    public List<FriendDTO> listFriends(Long uid) {
+        QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
+        wrapper.eq("uid", uid).select("friend_uid");
+        /*
+        * listObjs只会拿每条记录的第一个字段
+        * */
+        List<Object> friendIds = userFriendService.listObjs(wrapper);
+
+        if (friendIds.size() == 0)
+            return new ArrayList<>();
+
+        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+        wrapper1.in("id", friendIds).select("id", "name", "avatar", "intro");
+        List<User> users = userService.list(wrapper1);
+        List<FriendDTO> friendDTOS = users.stream().map(user -> {
+            FriendDTO friendDTO = new FriendDTO();
+            BeanUtils.copyProperties(user, friendDTO);
+            // 从redis中查询用户是否在线
+            friendDTO.setIsOnline(redisService.isUserOnline(friendDTO.getId()));
+            return friendDTO;
+        }).collect(Collectors.toList());
+
+        return friendDTOS;
+    }
+
+    @Override
+    public List<GroupDTO> listGroups(Long uid) {
+        QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", uid).select("group_id");
+        List<Object> groupIds = groupUsersService.listObjs(wrapper);
+
+        QueryWrapper<GroupInfo> wrapper1 = new QueryWrapper<>();
+        wrapper1.in("id", groupIds).select("id", "name", "avatar");
+        List<GroupInfo> infoList = groupInfoService.list(wrapper1);
+        List<GroupDTO> groupDTOS = infoList.stream().map(groupInfo -> {
+            GroupDTO dto = new GroupDTO();
+            BeanUtils.copyProperties(groupInfo, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        return groupDTOS;
     }
 
     private ApplyDTO toApplyDTO(Apply entity) {
