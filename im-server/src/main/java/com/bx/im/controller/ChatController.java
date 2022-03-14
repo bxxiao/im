@@ -3,10 +3,10 @@ package com.bx.im.controller;
 import com.bx.im.dto.ChatMsgDTO;
 import com.bx.im.dto.ChatPageDTO;
 import com.bx.im.util.CommonResult;
-import com.bx.im.util.ResultEnum;
 import com.bx.im.dto.ChatSessionDTO;
 import com.bx.im.dto.DialogueDataDTO;
 import com.bx.im.service.ChatService;
+import com.bx.im.util.exception.ExceptionCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +29,7 @@ public class ChatController {
     @GetMapping("/getSessionList")
     public CommonResult<ChatPageDTO> getSessionList(Long uid) {
         ChatPageDTO dto = chatService.getChatPageData(uid);
-        return CommonResult.success(ResultEnum.SUCCESS, dto);
+        return CommonResult.success(dto);
     }
 
     /**
@@ -43,18 +43,18 @@ public class ChatController {
     public CommonResult<DialogueDataDTO> getDialogueData(Long uid, Long toId, Integer type) {
         DialogueDataDTO dto = chatService.getDialogueData(uid, toId, type);
         if (dto != null)
-            return CommonResult.success(ResultEnum.SUCCESS, dto);
+            return CommonResult.success(dto);
         else
-            return CommonResult.failed(ResultEnum.FAILD);
+            return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
     @PostMapping("/createSession")
     public CommonResult<ChatSessionDTO> createSession(Long uid, Long toId, int type) {
         ChatSessionDTO dto = chatService.createSession(uid, toId, type);
         if (dto != null)
-            return CommonResult.success(ResultEnum.SUCCESS, dto);
+            return CommonResult.success(dto);
         else
-            return CommonResult.failed(ResultEnum.FAILD);
+            return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
     /**
@@ -67,12 +67,12 @@ public class ChatController {
     @PostMapping("/updateLastSeq")
     public CommonResult updateLastSeq(Long lastSeq, Long groupId, Long uid) {
         chatService.updateLastSeq(lastSeq, groupId, uid);
-        return CommonResult.success(ResultEnum.SUCCESS, null);
+        return CommonResult.success(null);
     }
 
     @GetMapping("/loadMsgs")
     public CommonResult<List<ChatMsgDTO>> loadMsgs(Long uid, Long toId, int type, Long msgSeq) {
         List<ChatMsgDTO> msgs =  chatService.loadMsgs(uid, toId, type, msgSeq);
-        return CommonResult.success(ResultEnum.SUCCESS, msgs);
+        return CommonResult.success(msgs);
     }
 }

@@ -4,7 +4,7 @@ import com.bx.im.dto.UserDTO;
 import com.bx.im.service.ChatService;
 import com.bx.im.service.bean.IUserService;
 import com.bx.im.util.CommonResult;
-import com.bx.im.util.ResultEnum;
+import com.bx.im.util.exception.ExceptionCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,17 +22,17 @@ public class UserController {
     public CommonResult<UserDTO> login(String phone, String password) {
         UserDTO dto = userService.login(phone, password);
         if (dto == null)
-            return CommonResult.failed(ResultEnum.LOGIN_FAILED);
+            return CommonResult.error(ExceptionCodeEnum.LOGIN_FAILED);
         else
-            return CommonResult.success(ResultEnum.SUCCESS, dto);
+            return CommonResult.success(dto);
     }
 
     @GetMapping("/info")
     public CommonResult<UserDTO> getUserInfo(Long uid) {
         UserDTO info = userService.getUserInfo(uid);
         if (info != null)
-            return CommonResult.success(ResultEnum.SUCCESS, info);
+            return CommonResult.success(info);
         else
-            return CommonResult.failed(ResultEnum.FAILD);
+            return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
 }

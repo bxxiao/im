@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
 import com.bx.im.entity.*;
+import com.bx.im.util.exception.ExceptionCodeEnum;
+import com.bx.im.util.exception.IMException;
 import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.ChatService;
 import com.bx.im.service.bean.*;
@@ -78,6 +80,8 @@ public class ChatServiceImpl implements ChatService {
         if (uid == null || toId == null || type == null)
             return null;
 
+        checkType(type);
+
         DialogueDataDTO result = new DialogueDataDTO();
         if (type == IMConstant.SINGLE_CHAT_TYPE) {
             result.setIsOnline(ChannelContext.getOnlineChannel(toId) != null);
@@ -119,6 +123,8 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public ChatSessionDTO createSession(Long uid, Long toId, int type) {
+        checkType(type);
+
         ChatSession entity = new ChatSession();
         /*
         * 返回的dto只需要包含avatar和name
@@ -151,6 +157,11 @@ public class ChatServiceImpl implements ChatService {
         return dto;
     }
 
+    private void checkType(int type) {
+        if (type != IMConstant.SINGLE_CHAT_TYPE && type != IMConstant.GROUP_CHAT_TYPE)
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
+    }
+
     @Override
     public void updateLastSeq(Long seq, Long groupId, Long uid) {
         redisService.updateLastSeq(seq, groupId, uid);
@@ -158,6 +169,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<ChatMsgDTO> loadMsgs(Long uid, Long toId, int type, Long msgSeq) {
+        checkType(type);
         if (type == IMConstant.SINGLE_CHAT_TYPE) {
             QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
             // SELECT * FROM friend_msg

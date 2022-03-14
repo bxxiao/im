@@ -3,7 +3,7 @@ package com.bx.im.controller;
 import com.bx.im.dto.ApplyDTO;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.util.CommonResult;
-import com.bx.im.util.ResultEnum;
+import com.bx.im.util.exception.ExceptionCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,17 +23,17 @@ public class FriendController {
     public CommonResult<List<ApplyDTO>> listApplys(Long uid) {
         List<ApplyDTO> applyDTOS = friendHandleService.listApplys(uid);
         if (applyDTOS == null)
-            return CommonResult.failed(ResultEnum.FAILD);
+            return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
         else
-            return CommonResult.success(ResultEnum.SUCCESS, applyDTOS);
+            return CommonResult.success(applyDTOS);
     }
 
     @PostMapping("/dealApply")
     public CommonResult dealApply(Integer applyId, Integer dealResult) {
         if (friendHandleService.dealApply(applyId, dealResult))
-            return CommonResult.success(ResultEnum.SUCCESS, null);
+            return CommonResult.success(null);
         else
-            return CommonResult.failed(ResultEnum.FAILD);
+            return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
 }

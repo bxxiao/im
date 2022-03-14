@@ -1,5 +1,6 @@
 package com.bx.im.util;
 
+import com.bx.im.util.exception.IExceptionCode;
 import lombok.Data;
 
 /**
@@ -27,12 +28,21 @@ public class CommonResult<T> {
         this.data = data;
     }
 
-    public static <T> CommonResult<T> success(ResultEnum result, T data) {
-        return new CommonResult<T>(result.getCode(), result.getMsg(), data);
+    public CommonResult(long code, String message) {
+        this.code = code;
+        this.message = message;
     }
 
-    public static <T> CommonResult<T> failed(ResultEnum result) {
-        return new CommonResult<>(result.getCode(), result.getMsg(), null);
+    public static <T> CommonResult<T> success(T data) {
+        return new CommonResult<T>(200, "操作成功", data);
     }
 
+    public static <T> CommonResult error(long code, String message) {
+        CommonResult result = new CommonResult(code, message);
+        return result;
+    }
+
+    public static CommonResult error(IExceptionCode exceptionCode) {
+        return new CommonResult(exceptionCode.getCode(), exceptionCode.getMsg());
+    }
 }
