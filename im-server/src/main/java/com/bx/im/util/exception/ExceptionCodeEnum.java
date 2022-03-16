@@ -10,7 +10,14 @@ public enum  ExceptionCodeEnum implements IExceptionCode {
     NO_SUCH_TYPE(1001, "指定的类型错误"),
     LOGIN_FAILED(1002, "登录失败，密码或账号错误"),
     APPLY_NOT_EXIST_OR_DEALED(1003, "申请不存在，或已被处理"),
-    ;
+    NO_SUCH_GROUP(1004, "该群不存在"),
+    PARAM_ERROR(1005, "参数值错误"),
+    PERMISSION_DENIED_FOR_NOT_MASTER(1006, "不是群主，没有权限操作"),
+    LOGIN_ILLEGAL(1007, "非法登录"),
+    DENIED_OPERATION_FOR_GROUP_MASTER(1007, "不能对群主执行该操作"),
+    OPERATION_ILLEGAL(1008, "非法操作"),
+    NOT_FRIEND_RELATIONSHIP(1009, "该用户不是逆的好友"),
+    NOT_GROUP_MEMBER(1010, "你不是该群成员");
 
 
     private Integer code;

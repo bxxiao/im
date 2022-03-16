@@ -28,4 +28,5 @@ public class IMConstant {
     public static final int PING_PROTOBUF_TYPE = 111;
     public static final int PONG_PROTOBUF_TYPE = 222;
     public static final int LOGIN_TOKEN_ERROR_PROTOBUF_TYPE = 401;
+    public static final String TOKEN_UID_KEY = "UID_IN_TOKEN";
 }

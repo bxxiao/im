@@ -37,6 +37,10 @@ public class CommonResult<T> {
         return new CommonResult<T>(200, "操作成功", data);
     }
 
+    public static <T> CommonResult<T> success() {
+        return new CommonResult<T>(200, "操作成功", null);
+    }
+
     public static <T> CommonResult error(long code, String message) {
         CommonResult result = new CommonResult(code, message);
         return result;

@@ -1,5 +1,6 @@
 package com.bx.im.config.interceptor;
 
+import com.bx.im.util.IMConstant;
 import com.bx.im.util.JwtUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -22,6 +23,11 @@ public class JwtInterceptor implements HandlerInterceptor {
             boolean verifyRet = JwtUtil.verifyJWT(token);
             if (!verifyRet)
                 response.setStatus(403);
+            else {
+                // 把通过验证的token中的uid取出放到request中
+                Long uid = JwtUtil.parseUid(token);
+                request.setAttribute(IMConstant.TOKEN_UID_KEY, uid);
+            }
             return verifyRet;
         }
 

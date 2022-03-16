@@ -1,9 +1,6 @@
 package com.bx.im.service;
 
-import com.bx.im.dto.ChatMsgDTO;
-import com.bx.im.dto.ChatPageDTO;
-import com.bx.im.dto.ChatSessionDTO;
-import com.bx.im.dto.DialogueDataDTO;
+import com.bx.im.dto.*;
 
 import java.util.List;
 
@@ -53,4 +50,12 @@ public interface ChatService {
      * @return
      */
     List<ChatMsgDTO> loadMsgs(Long uid, Long toId, int type, Long msgSeq);
+
+    /**
+     * uid预留；后续可能用到
+     * @param uid
+     * @param groupId
+     * @return
+     */
+    GroupDataDTO getGroupInfo(Long uid, Long groupId);
 }

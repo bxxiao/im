@@ -1,10 +1,7 @@
 package com.bx.im.controller;
 
-import com.bx.im.dto.ChatMsgDTO;
-import com.bx.im.dto.ChatPageDTO;
+import com.bx.im.dto.*;
 import com.bx.im.util.CommonResult;
-import com.bx.im.dto.ChatSessionDTO;
-import com.bx.im.dto.DialogueDataDTO;
 import com.bx.im.service.ChatService;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,5 +71,11 @@ public class ChatController {
     public CommonResult<List<ChatMsgDTO>> loadMsgs(Long uid, Long toId, int type, Long msgSeq) {
         List<ChatMsgDTO> msgs =  chatService.loadMsgs(uid, toId, type, msgSeq);
         return CommonResult.success(msgs);
+    }
+
+    @GetMapping("/groupInfo")
+    public CommonResult<GroupDataDTO> getGroupInfo(Long uid, Long groupId) {
+        GroupDataDTO dto = chatService.getGroupInfo(uid, groupId);
+        return CommonResult.success(dto);
     }
 }

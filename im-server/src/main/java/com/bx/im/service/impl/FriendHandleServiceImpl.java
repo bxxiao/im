@@ -9,6 +9,7 @@ import com.bx.im.dto.GroupDTO;
 import com.bx.im.entity.*;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.service.bean.*;
+import com.bx.im.util.IMConstant;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
 import org.springframework.beans.BeanUtils;
@@ -16,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -149,17 +153,105 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", uid).select("group_id");
         List<Object> groupIds = groupUsersService.listObjs(wrapper);
+        List<GroupDTO> groupDTOS;
 
-        QueryWrapper<GroupInfo> wrapper1 = new QueryWrapper<>();
-        wrapper1.in("id", groupIds).select("id", "name", "avatar");
-        List<GroupInfo> infoList = groupInfoService.list(wrapper1);
-        List<GroupDTO> groupDTOS = infoList.stream().map(groupInfo -> {
-            GroupDTO dto = new GroupDTO();
-            BeanUtils.copyProperties(groupInfo, dto);
-            return dto;
-        }).collect(Collectors.toList());
+        if (groupIds.size() > 0) {
+            QueryWrapper<GroupInfo> wrapper1 = new QueryWrapper<>();
+            wrapper1.in("id", groupIds).select("id", "name", "avatar");
+            List<GroupInfo> infoList = groupInfoService.list(wrapper1);
+            groupDTOS = infoList.stream().map(groupInfo -> {
+                GroupDTO dto = new GroupDTO();
+                BeanUtils.copyProperties(groupInfo, dto);
+                return dto;
+            }).collect(Collectors.toList());
+        } else
+            groupDTOS = new ArrayList<>(0);
 
         return groupDTOS;
+    }
+
+    @Override
+    public void deleteGroupMember(Long uid, Long groupId, Long deleted) {
+        /*
+        * 判断uid是否是群主id
+        * */
+        if (!isMaster(groupId, uid))
+            throw new IMException(ExceptionCodeEnum.PERMISSION_DENIED_FOR_NOT_MASTER);
+        /*
+        * 参数中的uid跟发出请求的用户（即uidInToken对应的用户）不一致，拒绝操作
+        *   （若不进行该判断，则任何已登录用户都可以发出一个uid是群主的请求来删除群成员）
+        * */
+        checkUser(uid);
+
+        if (deleted.equals(uid))
+            throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
+
+        QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
+        wrapper.eq("group_id", groupId).eq("user_id", deleted);
+        if (!groupUsersService.remove(wrapper))
+            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+
+    }
+
+    @Override
+    public void deleteFriend(Long uid, Long friendUid) {
+        checkUser(uid);
+
+        QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
+        wrapper.eq("uid", uid).eq("friend_uid", friendUid);
+        // 若不是好友关系
+        if (userFriendService.count(wrapper) <= 0)
+            throw new IMException(ExceptionCodeEnum.NOT_FRIEND_RELATIONSHIP);
+
+        if (!userFriendService.remove(wrapper))
+            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+    }
+
+    @Override
+    public void quitGroup(Long uid, Long groupId) {
+        checkUser(uid);
+
+        QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
+        wrapper.eq("group_id", groupId).eq("user_id", uid);
+
+        if (groupUsersService.count(wrapper) <= 0)
+            throw new IMException(ExceptionCodeEnum.NOT_GROUP_MEMBER);
+
+        // TODO：群主暂时不支持该操作（可以改为群主退出群聊时自动选择一个新群主）
+        // TODO：group_users表加个事件字段
+        if (isMaster(groupId, uid))
+            throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
+
+        if (!groupUsersService.remove(wrapper))
+            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+    }
+
+    /**
+     * 检查发出请求的用户（token中的uid）跟请求中的用户id参数是否一致，不一致则抛出异常
+     * @param uid
+     */
+    private void checkUser(Long uid) {
+        HttpServletRequest request =
+                ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
+        Long uidInToken = (Long) request.getAttribute(IMConstant.TOKEN_UID_KEY);
+        if (uidInToken == null || !uidInToken.equals(uid))
+            throw new IMException(ExceptionCodeEnum.OPERATION_ILLEGAL);
+    }
+
+    /**
+     * 指定用户是否是指定群的群主
+     * @param groupId
+     * @param uid
+     * @return
+     */
+    private boolean isMaster(Long groupId, Long uid) {
+        QueryWrapper<GroupInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", groupId).select("master_uid");
+        GroupInfo groupInfo = groupInfoService.getOne(wrapper);
+        if (groupInfo == null)
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
+
+        return groupInfo.getMasterUid().equals(uid);
     }
 
     private ApplyDTO toApplyDTO(Apply entity) {

@@ -198,6 +198,51 @@ public class ChatServiceImpl implements ChatService {
         return null;
     }
 
+    @Override
+    public GroupDataDTO getGroupInfo(Long uid, Long groupId) {
+        GroupDataDTO dto = new GroupDataDTO();
+        /*
+        * 查group_info表
+        * */
+        QueryWrapper<GroupInfo> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("id", groupId).select("id", "name", "master_uid");
+        GroupInfo groupInfo = groupInfoService.getOne(wrapper1);
+
+        if (groupInfo == null)
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
+
+        dto.setId(groupInfo.getId());
+        dto.setName(groupInfo.getName());
+        dto.setMasterId(groupInfo.getMasterUid());
+
+        /*
+        * 查出群成员的id，再查出对应的User对象的List
+        * */
+        QueryWrapper<GroupUsers> wrapper2 = new QueryWrapper<>();
+        wrapper2.eq("group_id", groupId).select("user_id");
+        List<Object> memberIds = groupUsersService.listObjs(wrapper2);
+
+        QueryWrapper<User> wrapper3 = new QueryWrapper<>();
+        wrapper3.in("id", memberIds).select("id", "name", "avatar");
+        List<User> users = userService.list(wrapper3);
+
+        /*
+        * 转换为GroupDataDTO.GroupMember对象，并设置dto的群主名
+        * */
+        List<GroupDataDTO.GroupMember> members = users.stream().map(user -> {
+            GroupDataDTO.GroupMember member = new GroupDataDTO.GroupMember();
+            member.setUid(user.getId());
+            member.setName(user.getName());
+            member.setAvatar(user.getAvatar());
+            if (user.getId() != null && user.getId().equals(groupInfo.getMasterUid()))
+                dto.setMasterName(user.getName());
+            return member;
+        }).collect(Collectors.toList());
+
+        dto.setMembers(members);
+        return dto;
+    }
+
     /*
     * 将反序的groupMsgSet转为正序的List
     * */

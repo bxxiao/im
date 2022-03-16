@@ -3,6 +3,7 @@ package com.bx.im;
 // import com.bx.im.proto.DemoProto;
 // import com.google.protobuf.InvalidProtocolBufferException;
 // import com.google.protobuf.util.JsonFormat;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
@@ -51,10 +52,10 @@ class ImServerApplicationTests {
     private IUserFriendService userFriendService;
 
     /*
-    * listObjs方法返回一个List，元素是每条记录的第一个值
-    * */
+     * listObjs方法返回一个List，元素是每条记录的第一个值
+     * */
     @Test
-    public void testMybatisListObjs(){
+    public void testMybatisListObjs() {
         QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
         wrapper.eq("uid", 2L).select("uid", "friend_uid");
         // List<Long> list = userFriendService.listObjs(wrapper, userFriend -> ((UserFriend) userFriend).getFriendUid());
@@ -63,8 +64,8 @@ class ImServerApplicationTests {
     }
 
     /*
-    * 使用entity对象进行查询，根据entity对象的非null值自动拼接where，用and连接
-    * */
+     * 使用entity对象进行查询，根据entity对象的非null值自动拼接where，用and连接
+     * */
     @Test
     void testQueryWrapper() {
         ChatSession chatSession = new ChatSession();
@@ -77,7 +78,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testOrAnd(){
+    public void testOrAnd() {
         QueryWrapper<FriendMsg> msgWrapper = new QueryWrapper<>();
         msgWrapper.or(i -> i.eq("sender_uid", 1).eq("to_uid", 2))
                 .or(i -> i.eq("sender_uid", 2).eq("to_uid", 1))
@@ -90,10 +91,10 @@ class ImServerApplicationTests {
     }
 
     /*
-    * 返回List<Map<String, Object>>时，每个记录将以 字段名-值 的形式放在Map中，并且之后放不为null的字段
-    * */
+     * 返回List<Map<String, Object>>时，每个记录将以 字段名-值 的形式放在Map中，并且之后放不为null的字段
+     * */
     @Test
-    public void testListMaps(){
+    public void testListMaps() {
         QueryWrapper<FriendMsg> wrapper = Wrappers.query();
         wrapper.eq("to_uid", 2).eq("has_read", 0).groupBy("sender_uid").select("sender_uid", "count(*) as num");
         List<Map<String, Object>> maps = msgService.listMaps(wrapper);
@@ -118,7 +119,7 @@ class ImServerApplicationTests {
     // }
 
     @Test
-    public void testRedisTemplateAPI(){
+    public void testRedisTemplateAPI() {
         // 操作hash类型值
         Map<Integer, String> map = redisTemplate.opsForHash().entries("hash1");
         System.out.println(map);
@@ -136,7 +137,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testRedisTemplateZSetAPI(){
+    public void testRedisTemplateZSetAPI() {
         RedisZSetCommands.Range range = RedisZSetCommands.Range.range();
         range.gt("\"one\"");
         // limit索引从0开始
@@ -151,7 +152,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testSetGroupMsgTestData(){
+    public void testSetGroupMsgTestData() {
         GroupMsgDTO dto = new GroupMsgDTO();
         dto.setContent("hahaha");
         dto.setTime(LocalDateTime.now().toString());
@@ -166,7 +167,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testRedisSetAPI(){
+    public void testRedisSetAPI() {
         Set intersect = redisTemplate.opsForSet().intersect("setA", "setB");
         System.out.println(intersect);
         Set intersect2 = redisTemplate.opsForSet().intersect("setA", "setC");
@@ -176,11 +177,17 @@ class ImServerApplicationTests {
 
     // =======================Test Project API=========================
 
+    @Test
+    public void testGetGroupInfo() {
+        GroupDataDTO dto = chatService.getGroupInfo(0L, 1L);
+        System.out.println(dto);
+    }
+
     @Autowired
     private FriendHandleService friendHandleService;
 
     @Test
-    public void testListFriends(){
+    public void testListFriends() {
         List<FriendDTO> dtos = friendHandleService.listFriends(2L);
         for (FriendDTO dto : dtos) {
             System.out.println(dto);
@@ -188,7 +195,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testGetHistoryMsgs(){
+    public void testGetHistoryMsgs() {
         Set<GroupMsgDTO> historyMsgs = redisService.getHistoryMsgs(1L, 11L);
         Iterator<GroupMsgDTO> iterator = historyMsgs.iterator();
         while (iterator.hasNext()) {
@@ -208,18 +215,19 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testGetGroupOnlineUsers(){
+    public void testGetGroupOnlineUsers() {
         Set<Long> set = redisService.getGroupOnlineUsers(1);
         System.out.println(set);
     }
+
     @Test
-    public void testgetSessionList(){
+    public void testgetSessionList() {
         ChatPageDTO dto = chatService.getChatPageData(1L);
         System.out.println(dto);
     }
 
     @Test
-    public void testgetDialogueData(){
+    public void testgetDialogueData() {
         DialogueDataDTO dialogueData = chatService.getDialogueData(1L, 2L, IMConstant.SINGLE_CHAT_TYPE);
         System.out.println(dialogueData.getIsOnline());
         for (ChatMsgDTO msg : dialogueData.getMsgs()) {
@@ -228,7 +236,7 @@ class ImServerApplicationTests {
     }
 
     @Test
-    public void testLogin(){
+    public void testLogin() {
         UserDTO dto = userService.login("15895847456", "69999");
         System.out.println(dto);
     }
@@ -237,10 +245,10 @@ class ImServerApplicationTests {
     private RedisTemplate redisTemplate;
 
     /*
-    * 项目中放的数据，要让其被redis server持久化，要在客户端通过shutdown正常关闭，不然数据会丢失。。
-    * */
+     * 项目中放的数据，要让其被redis server持久化，要在客户端通过shutdown正常关闭，不然数据会丢失。。
+     * */
     @Test
-    public void testRedisAPI(){
+    public void testRedisAPI() {
         // User user = new User();
         // user.setId(100L);
         // user.setAvatar("hahaha");

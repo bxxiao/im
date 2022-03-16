@@ -6,6 +6,7 @@ import com.bx.im.dto.GroupDTO;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.exception.ExceptionCodeEnum;
+import com.bx.im.util.exception.IMException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,11 @@ public class FriendController {
     @Autowired
     private FriendHandleService friendHandleService;
 
+    /**
+     * 获取好友申请列表（好友发出的申请和群邀请统称为好友申请）
+     * @param uid
+     * @return
+     */
     @GetMapping("/listApply")
     public CommonResult<List<ApplyDTO>> listApplys(Long uid) {
         List<ApplyDTO> applyDTOS = friendHandleService.listApplys(uid);
@@ -30,6 +36,12 @@ public class FriendController {
             return CommonResult.success(applyDTOS);
     }
 
+    /**
+     * 处理好友申请
+     * @param applyId
+     * @param dealResult
+     * @return
+     */
     @PostMapping("/dealApply")
     public CommonResult dealApply(Integer applyId, Integer dealResult) {
         if (friendHandleService.dealApply(applyId, dealResult))
@@ -48,6 +60,42 @@ public class FriendController {
     public CommonResult<List<GroupDTO>> listGroups(Long uid) {
         List<GroupDTO> dtos = friendHandleService.listGroups(uid);
         return CommonResult.success(dtos);
+    }
+
+    /**
+     * 删除群成员
+     * @param uid 发出操作的用户
+     * @param groupId
+     * @param deleted
+     * @return
+     */
+    @PostMapping("/delete/groupMember")
+    public CommonResult deleteGroupMember(Long uid, Long groupId, Long deleted) {
+        if (uid == null || groupId == null || deleted == null)
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+        friendHandleService.deleteGroupMember(uid, groupId, deleted);
+        return CommonResult.success();
+    }
+
+    /**
+     * 删除好友
+     * @param uid
+     * @param friendUid
+     * @return
+     */
+    @PostMapping("/delete/friend")
+    public CommonResult deleteFriend(Long uid, Long friendUid) {
+        friendHandleService.deleteFriend(uid, friendUid);
+        return CommonResult.success();
+    }
+
+    @PostMapping("/quitGroup")
+    public CommonResult quitGroup(Long uid, Long groupId) {
+        if (uid == null || groupId == null)
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+
+        friendHandleService.quitGroup(uid, groupId);
+        return CommonResult.success();
     }
 
 }

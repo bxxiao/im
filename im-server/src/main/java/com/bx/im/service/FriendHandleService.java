@@ -26,4 +26,21 @@ public interface FriendHandleService {
     List<FriendDTO> listFriends(Long uid);
 
     List<GroupDTO> listGroups(Long uid);
+
+    /**
+     * 将指定用户踢出群聊
+     * @param uid 发起踢出操作的群主或管理员（to be...）
+     * @param groupId
+     * @param deleted
+     */
+    void deleteGroupMember(Long uid, Long groupId, Long deleted);
+
+    void deleteFriend(Long uid, Long friendUid);
+
+    /**
+     * 退出群聊
+     * @param uid
+     * @param groupId
+     */
+    void quitGroup(Long uid, Long groupId);
 }
