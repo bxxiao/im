@@ -6,6 +6,7 @@ import com.bx.im.cache.RedisService;
 import com.bx.im.dto.ApplyDTO;
 import com.bx.im.dto.FriendDTO;
 import com.bx.im.dto.GroupDTO;
+import com.bx.im.dto.ItemDTO;
 import com.bx.im.entity.*;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.service.bean.*;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -226,16 +228,140 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
+    @Override
+    public void sendFriendApply(Long friendUid) {
+        Long curUid = getUidInToken();
+        // 不能自己添加自己
+        if (curUid != null && curUid.equals(friendUid))
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+
+        // 判断指定好友是否存在
+        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("id", friendUid);
+        if (userService.count(wrapper1) <= 0)
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_USER);
+
+        // 是否已经是好友关系
+        QueryWrapper<UserFriend> wrapper2 = new QueryWrapper<>();
+        wrapper2.eq("uid", curUid).eq("friend_uid", friendUid);
+        if (userFriendService.count(wrapper2) > 0)
+            throw new IMException(ExceptionCodeEnum.HAD_IN_FRIEND_RELATIONSHIP);
+
+        // 是否已发出过申请并且对方还未处理
+        QueryWrapper<Apply> wrapper3 = new QueryWrapper<>();
+        Apply condition = new Apply();
+        condition.setSenderUid(curUid);
+        condition.setToUid(friendUid);
+        condition.setType(Apply.FRIEND_APPLY);
+        /*
+        * 这里状态限定为【处理中】，若是已同意，则在上个if中会抛异常
+        * 若是已被拒绝，则可以再次添加
+        * */
+        condition.setStatus(Apply.DEALING);
+        wrapper3.setEntity(condition);
+        if (applyService.count(wrapper3) > 0)
+            throw new IMException(ExceptionCodeEnum.HAD_SEND_APPLY);
+
+        /*
+        * 插入申请记录
+        * */
+        Apply apply = new Apply();
+        apply.setSenderUid(curUid);
+        apply.setToUid(friendUid);
+        apply.setType(Apply.FRIEND_APPLY);
+        apply.setStatus(Apply.DEALING);
+        apply.setTime(LocalDateTime.now());
+        if (!applyService.save(apply))
+            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+    }
+
+    @Override
+    public List<ItemDTO> searchUserAndGroup(String keyword) {
+        Long curUid = getUidInToken();
+        // 当前用户好友id
+        Set<Long> friendUidSet = getFriendUidSet(curUid);
+
+        /*
+         * 1. 查询用户
+         * */
+        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+        wrapper1.like("name", keyword).or().like("phone", keyword).select("id", "name", "phone", "avatar");
+        List<User> users = userService.list(wrapper1);
+        List<ItemDTO> collect = users.stream()
+                // 过滤掉自己跟好友
+                .filter(user -> !user.getId().equals(curUid) && !friendUidSet.contains(user.getId()))
+                .map(user -> userToItemDTO(user))
+                .collect(Collectors.toList());
+
+        /*
+         * 2. 查询群
+         * */
+        QueryWrapper<GroupInfo> wrapper2 = new QueryWrapper<>();
+        wrapper2.like("group_number", keyword).or().like("name", keyword)
+                .select("id", "group_number", "name", "avatar");
+        List<GroupInfo> groupInfos = groupInfoService.list(wrapper2);
+        List<ItemDTO> groupInfoItems = groupInfos.stream()
+                // TODO:过滤已加入的群
+                .map(info -> groupInfoToItemDTO(info))
+                .collect(Collectors.toList());
+
+        collect.addAll(groupInfoItems);
+
+        return collect;
+    }
+
+    private Set<Long> getFriendUidSet(Long uid) {
+        QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
+        wrapper.eq("uid", uid).select("friend_uid");
+        List<Object> friendIds = userFriendService.listObjs(wrapper);
+        // 将List转为Set
+        Set<Long> idSet = friendIds.stream()
+                .map(obj -> (Long) obj)
+                .collect(Collectors.toSet());
+        return idSet;
+    }
+
+    private ItemDTO userToItemDTO(User user) {
+        ItemDTO dto = ItemDTO.builder()
+                .type(1)
+                .id(user.getId())
+                .name(user.getName())
+                .avatar(user.getAvatar())
+                .phone(user.getPhone())
+                .build();
+        return dto;
+    }
+
+    private ItemDTO groupInfoToItemDTO(GroupInfo info) {
+        ItemDTO dto = ItemDTO.builder()
+                .type(2)
+                .id(info.getId())
+                .name(info.getName())
+                .avatar(info.getAvatar())
+                .groupNumber(info.getGroupNumber())
+                .build();
+        return dto;
+    }
+
     /**
      * 检查发出请求的用户（token中的uid）跟请求中的用户id参数是否一致，不一致则抛出异常
      * @param uid
      */
     private void checkUser(Long uid) {
+        Long uidInToken = getUidInToken();
+        if (uidInToken == null || !uidInToken.equals(uid))
+            throw new IMException(ExceptionCodeEnum.OPERATION_ILLEGAL);
+    }
+
+    /**
+     * 在拦截器中，解析jwt后会把其中的uid放入request的属性中，从中取出
+     * @return
+     */
+    private Long getUidInToken() {
         HttpServletRequest request =
                 ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
         Long uidInToken = (Long) request.getAttribute(IMConstant.TOKEN_UID_KEY);
-        if (uidInToken == null || !uidInToken.equals(uid))
-            throw new IMException(ExceptionCodeEnum.OPERATION_ILLEGAL);
+        return uidInToken;
     }
 
     /**

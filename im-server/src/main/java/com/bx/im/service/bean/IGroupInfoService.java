@@ -9,7 +9,7 @@ import com.bx.im.entity.GroupInfo;
  * </p>
  *
  * @author bx
- * @since 2022-03-04
+ * @since 2022-03-16
  */
 public interface IGroupInfoService extends IService<GroupInfo> {
 

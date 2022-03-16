@@ -1,5 +1,6 @@
 package com.bx.im.controller;
 
+import com.bx.im.dto.ItemDTO;
 import com.bx.im.dto.UserDTO;
 import com.bx.im.service.ChatService;
 import com.bx.im.service.bean.IUserService;
@@ -7,6 +8,8 @@ import com.bx.im.util.CommonResult;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -35,4 +38,6 @@ public class UserController {
         else
             return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
+
+
 }

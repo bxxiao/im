@@ -3,6 +3,7 @@ package com.bx.im.controller;
 import com.bx.im.dto.ApplyDTO;
 import com.bx.im.dto.FriendDTO;
 import com.bx.im.dto.GroupDTO;
+import com.bx.im.dto.ItemDTO;
 import com.bx.im.service.FriendHandleService;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.exception.ExceptionCodeEnum;
@@ -98,4 +99,16 @@ public class FriendController {
         return CommonResult.success();
     }
 
+    @PostMapping("/apply/friend")
+    public CommonResult sendFriendApply(Long friendUid) {
+        friendHandleService.sendFriendApply(friendUid);
+        return CommonResult.success();
+    }
+
+
+    @GetMapping("/search")
+    public CommonResult<List<ItemDTO>> searchUsers(String keyword) {
+        List<ItemDTO> userDTOS = friendHandleService.searchUserAndGroup(keyword);
+        return CommonResult.success(userDTOS);
+    }
 }

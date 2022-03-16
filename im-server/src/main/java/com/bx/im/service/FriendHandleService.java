@@ -3,6 +3,7 @@ package com.bx.im.service;
 import com.bx.im.dto.ApplyDTO;
 import com.bx.im.dto.FriendDTO;
 import com.bx.im.dto.GroupDTO;
+import com.bx.im.dto.ItemDTO;
 
 import java.util.List;
 
@@ -43,4 +44,17 @@ public interface FriendHandleService {
      * @param groupId
      */
     void quitGroup(Long uid, Long groupId);
+
+    /**
+     * 申请添加好友，发出好友申请
+     * @param friendUid
+     */
+    void sendFriendApply(Long friendUid);
+
+    /**
+     * 根据关键词在name和phone字段中搜索用户和群
+     * @param keyword
+     * @return
+     */
+    List<ItemDTO> searchUserAndGroup(String keyword);
 }

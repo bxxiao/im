@@ -9,7 +9,7 @@ import com.bx.im.proto.IMPacketProto;
 import com.bx.im.proto.MsgAckProto;
 import com.bx.im.service.bean.IFriendMsgService;
 import com.bx.im.util.IMConstant;
-import com.bx.im.util.IMUtil;
+import com.bx.im.util.WSUtils;
 import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IUserFriendService;
 import com.bx.im.service.bean.IUserService;
@@ -79,7 +79,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         Channel targetChannel = ChannelContext.getOnlineChannel(toUid);
         if (targetChannel != null) {
             ChatMsgProto.ChatMsg newChatMsg = chatMsg.toBuilder().setMsgSeq(msgSeq).build();
-            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, newChatMsg);
+            IMPacketProto.IMPacket packet = WSUtils.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, newChatMsg);
             targetChannel.writeAndFlush(packet);
         }
     }
@@ -108,10 +108,10 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         * */
         Set<Long> groupOnlineUsers = redisService.getGroupOnlineUsers(groupId);
         // 移除掉当前用户
-        groupOnlineUsers.remove(IMUtil.getOnlineUserId(ctx.channel()));
+        groupOnlineUsers.remove(WSUtils.getOnlineUserId(ctx.channel()));
 
         Iterator<Long> iterator = groupOnlineUsers.iterator();
-        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, msgToSend);
+        IMPacketProto.IMPacket packet = WSUtils.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, msgToSend);
         while (iterator.hasNext()) {
             Long uid = iterator.next();
             Channel channel = ChannelContext.getOnlineChannel(uid);
@@ -128,11 +128,11 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
      */
     private void sendMsgAckPacket(ChannelHandlerContext ctx, ChatMsgProto.ChatMsg msg) {
         MsgAckProto.MsgAck msgAck = MsgAckProto.MsgAck.newBuilder()
-                .setSenderUid(IMUtil.getOnlineUserId(ctx.channel()))
+                .setSenderUid(WSUtils.getOnlineUserId(ctx.channel()))
                 .setToId(msg.getToId())
                 .setMsgId(msg.getMsgId())
                 .build();
-        IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.MSGACK_PROTOBUF_TYPE, null, msgAck);
+        IMPacketProto.IMPacket packet = WSUtils.createIMPacket(IMConstant.MSGACK_PROTOBUF_TYPE, null, msgAck);
         ctx.channel().writeAndFlush(packet);
     }
 

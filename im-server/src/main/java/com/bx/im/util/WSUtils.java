@@ -5,7 +5,7 @@ import com.bx.im.websocket.ChannelContext;
 import com.google.protobuf.GeneratedMessageV3;
 import io.netty.channel.Channel;
 
-public class IMUtil {
+public class WSUtils {
 
     public static IMPacketProto.IMPacket createIMPacket(int type, Long uid, GeneratedMessageV3 data) {
         IMPacketProto.IMPacket packet = IMPacketProto.IMPacket.newBuilder()

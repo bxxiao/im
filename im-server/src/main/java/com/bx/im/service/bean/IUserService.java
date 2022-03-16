@@ -1,8 +1,11 @@
 package com.bx.im.service.bean;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.bx.im.dto.ItemDTO;
 import com.bx.im.dto.UserDTO;
 import com.bx.im.entity.User;
+
+import java.util.List;
 
 /**
  * <p>

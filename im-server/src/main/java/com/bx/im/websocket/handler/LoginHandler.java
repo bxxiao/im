@@ -7,7 +7,7 @@ import com.bx.im.proto.IMPacketProto;
 import com.bx.im.proto.LoginProto;
 import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IUserService;
-import com.bx.im.util.IMUtil;
+import com.bx.im.util.WSUtils;
 import com.bx.im.util.JwtUtil;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
@@ -51,7 +51,7 @@ public class LoginHandler extends SimpleChannelInboundHandler<LoginProto.Login> 
             /*
             * 发送登录失败的回应包，关闭连接
             * */
-            IMPacketProto.IMPacket packet = IMUtil.createLoginFailedPacket();
+            IMPacketProto.IMPacket packet = WSUtils.createLoginFailedPacket();
             ctx.channel().writeAndFlush(packet).addListener(future -> {
                 ChannelFuture channelFuture = (ChannelFuture) future;
                 if (channelFuture.isSuccess()) {

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author bx
- * @since 2022-03-04
+ * @since 2022-03-16
  */
 @TableName("group_info")
 public class GroupInfo implements Serializable {
@@ -22,6 +22,12 @@ public class GroupInfo implements Serializable {
 
       @TableId(value = "id", type = IdType.AUTO)
     private Long id;
+
+    /**
+     * 群号码
+     * TODO:有查询群消息的地方,补上该字段
+     */
+    private String groupNumber;
 
     private String name;
 
@@ -52,6 +58,14 @@ public class GroupInfo implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getGroupNumber() {
+        return groupNumber;
+    }
+
+    public void setGroupNumber(String groupNumber) {
+        this.groupNumber = groupNumber;
     }
 
     public String getName() {
@@ -106,6 +120,7 @@ public class GroupInfo implements Serializable {
     public String toString() {
         return "GroupInfo{" +
         "id=" + id +
+        ", groupNumber=" + groupNumber +
         ", name=" + name +
         ", avatar=" + avatar +
         ", masterUid=" + masterUid +

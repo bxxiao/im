@@ -17,7 +17,10 @@ public enum  ExceptionCodeEnum implements IExceptionCode {
     DENIED_OPERATION_FOR_GROUP_MASTER(1007, "不能对群主执行该操作"),
     OPERATION_ILLEGAL(1008, "非法操作"),
     NOT_FRIEND_RELATIONSHIP(1009, "该用户不是逆的好友"),
-    NOT_GROUP_MEMBER(1010, "你不是该群成员");
+    NOT_GROUP_MEMBER(1010, "你不是该群成员"),
+    NO_SUCH_USER(1011, "该用户不存在"),
+    HAD_IN_FRIEND_RELATIONSHIP(1012, "已经是好友关系"),
+    HAD_SEND_APPLY(1013, "已发出好友申请，等待对方处理");
 
 
     private Integer code;

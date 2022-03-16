@@ -7,7 +7,7 @@ import com.bx.im.proto.MsgReadProto;
 import com.bx.im.util.IMConstant;
 import com.bx.im.websocket.ChannelContext;
 import com.bx.im.service.bean.IFriendMsgService;
-import com.bx.im.util.IMUtil;
+import com.bx.im.util.WSUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -42,7 +42,7 @@ public class MsgReadHandler extends SimpleChannelInboundHandler<MsgReadProto.Msg
         long toId = msg.getToId();
         Channel toUser = ChannelContext.getOnlineChannel(toId);
         if (toUser != null) {
-            IMPacketProto.IMPacket packet = IMUtil.createIMPacket(IMConstant.MSGREAD_PROTOBUF_TYPE, null, msg);
+            IMPacketProto.IMPacket packet = WSUtils.createIMPacket(IMConstant.MSGREAD_PROTOBUF_TYPE, null, msg);
             toUser.writeAndFlush(packet);
         }
     }

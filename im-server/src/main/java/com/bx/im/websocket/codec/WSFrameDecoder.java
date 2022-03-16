@@ -2,7 +2,7 @@ package com.bx.im.websocket.codec;
 
 import com.bx.im.proto.*;
 import com.bx.im.util.IMConstant;
-import com.bx.im.util.IMUtil;
+import com.bx.im.util.WSUtils;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
@@ -59,7 +59,7 @@ public class WSFrameDecoder extends MessageToMessageDecoder<WebSocketFrame> {
         int packetType = packet.getType();
         // 心跳包处理
         if (packetType == IMConstant.PING_PROTOBUF_TYPE) {
-            IMPacketProto.IMPacket pongPacket = IMUtil.createPongPacket();
+            IMPacketProto.IMPacket pongPacket = WSUtils.createPongPacket();
             ctx.channel().writeAndFlush(pongPacket);
             return;
         }
