@@ -14,7 +14,10 @@ import com.bx.im.util.IMConstant;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -241,6 +244,28 @@ public class ChatServiceImpl implements ChatService {
 
         dto.setMembers(members);
         return dto;
+    }
+
+    @Override
+    public void deleteSession(Long toId, int type) {
+        if (type != IMConstant.SINGLE_CHAT_TYPE && type != IMConstant.GROUP_CHAT_TYPE)
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+
+        QueryWrapper<ChatSession> wrapper = new QueryWrapper<>();
+        Long curUid = getUidInToken();
+        if (curUid == null)
+            throw new IMException(ExceptionCodeEnum.DENIED_FOR_NO_LOGIN);
+
+        wrapper.eq("user_id", curUid).eq("to_id", toId).eq("type", type);
+        if (!sessionService.remove(wrapper))
+            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+    }
+
+    private Long getUidInToken() {
+        HttpServletRequest request =
+                ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
+        Long uidInToken = (Long) request.getAttribute(IMConstant.TOKEN_UID_KEY);
+        return uidInToken;
     }
 
     /*

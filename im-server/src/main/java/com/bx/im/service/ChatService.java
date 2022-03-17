@@ -58,4 +58,6 @@ public interface ChatService {
      * @return
      */
     GroupDataDTO getGroupInfo(Long uid, Long groupId);
+
+    void deleteSession(Long toId, int type);
 }

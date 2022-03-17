@@ -4,6 +4,7 @@ import com.bx.im.dto.*;
 import com.bx.im.util.CommonResult;
 import com.bx.im.service.ChatService;
 import com.bx.im.util.exception.ExceptionCodeEnum;
+import com.bx.im.util.exception.IMException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +53,14 @@ public class ChatController {
             return CommonResult.success(dto);
         else
             return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
+    }
+
+    @PostMapping("/deleteSession")
+    public CommonResult deleteSession(Long toId, Integer type) {
+        if (toId == null || type == null)
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+        chatService.deleteSession(toId, type);
+        return CommonResult.success();
     }
 
     /**
