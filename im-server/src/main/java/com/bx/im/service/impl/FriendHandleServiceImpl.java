@@ -50,8 +50,10 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     private RedisService redisService;
 
 
+    // TODO：可以不用uid这个参数
     @Override
     public List<ApplyDTO> listApplys(Long uid) {
+        checkUser(uid);
         QueryWrapper<Apply> wrapper = new QueryWrapper<>();
         /*
         * 查询发给自己的
@@ -72,19 +74,21 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public boolean dealApply(Integer id, Integer dealResult) {
+        // 指定的处理类型错误
+        if (dealResult == null || (dealResult != Apply.AGREED && dealResult != Apply.REJECTED))
+            throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
+
         // 若对应数据库记录不存在，或已被处理，则返回false
         Apply apply = applyService.getById(id);
         if (apply == null || apply.getStatus() != Apply.DEALING)
             throw new IMException(ExceptionCodeEnum.APPLY_NOT_EXIST_OR_DEALED);
 
-        // 指定的处理类型错误
-        /*
-        * TODO：在controller进行参数验证
-        * */
-        if (dealResult == null || (dealResult != Apply.AGREED && dealResult != Apply.REJECTED))
-            throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
+        // 不是发给自己的apply，不能操作
+        Long curUid = getUidInToken();
+        if (!apply.getToUid().equals(curUid))
+            throw new IMException(ExceptionCodeEnum.OPERATION_ILLEGAL);
 
-        // 同意添加好友（或接收邀请）
+        // 同意添加好友、或接受群邀请、或统一入群申请
         if (dealResult == Apply.AGREED) {
             // 好友申请
             if (apply.getType() == Apply.FRIEND_APPLY) {
@@ -106,7 +110,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 * TODO：通过WebSocket发送通知？
                 * */
             // 群聊邀请
-            } else if (apply.getType() == Apply.GROUP_APPLY) {
+            } else if (apply.getType() == Apply.GROUP_INVITATION) {
                 GroupUsers groupUsers = new GroupUsers();
                 groupUsers.setGroupId(apply.getGroupId());
                 groupUsers.setUserId(apply.getToUid());
@@ -114,6 +118,22 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 /*
                 * TODO：发一个新成员入群通知？
                 * */
+            // 入群申请
+            } else if (apply.getType() == Apply.GROUP_APPLY) {
+                QueryWrapper<GroupInfo> groupInfoWrapper = new QueryWrapper<>();
+                groupInfoWrapper.eq("id", apply.getGroupId()).select("master_uid");
+                GroupInfo groupInfo = groupInfoService.getOne(groupInfoWrapper);
+                if (groupInfo == null)
+                    throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
+                // 是否是群主在进行操作
+                if (!groupInfo.getMasterUid().equals(curUid))
+                    throw new IMException(ExceptionCodeEnum.PERMISSION_DENIED_FOR_NOT_MASTER);
+                // 添加新的群成员
+                GroupUsers groupUsers = new GroupUsers();
+                groupUsers.setGroupId(apply.getGroupId());
+                groupUsers.setUserId(apply.getSenderUid());
+                if (!groupUsersService.save(groupUsers))
+                    throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
             } else
                 throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
         }
@@ -229,49 +249,77 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     }
 
     @Override
-    public void sendFriendApply(Long friendUid) {
-        Long curUid = getUidInToken();
-        // 不能自己添加自己
-        if (curUid != null && curUid.equals(friendUid))
+    public void sendApply(Long targetId, Integer type) {
+        // 只处理好友申请和入群申请
+        if (type != Apply.FRIEND_APPLY && type != Apply.GROUP_APPLY)
             throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
 
-        // 判断指定好友是否存在
-        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
-        wrapper1.eq("id", friendUid);
-        if (userService.count(wrapper1) <= 0)
-            throw new IMException(ExceptionCodeEnum.NO_SUCH_USER);
+        Long curUid = getUidInToken();
+        GroupInfo groupInfo = null;
 
-        // 是否已经是好友关系
-        QueryWrapper<UserFriend> wrapper2 = new QueryWrapper<>();
-        wrapper2.eq("uid", curUid).eq("friend_uid", friendUid);
-        if (userFriendService.count(wrapper2) > 0)
-            throw new IMException(ExceptionCodeEnum.HAD_IN_FRIEND_RELATIONSHIP);
+        // 好友申请
+        if (type == Apply.FRIEND_APPLY) {
+            // 不能自己添加自己
+            if (curUid != null && curUid.equals(targetId))
+                throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
 
-        // 是否已发出过申请并且对方还未处理
-        QueryWrapper<Apply> wrapper3 = new QueryWrapper<>();
+            // 判断指定好友是否存在
+            QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+            wrapper1.eq("id", targetId);
+            if (userService.count(wrapper1) <= 0)
+                throw new IMException(ExceptionCodeEnum.NO_SUCH_USER);
+
+            // 是否已经是好友关系
+            QueryWrapper<UserFriend> wrapper2 = new QueryWrapper<>();
+            wrapper2.eq("uid", curUid).eq("friend_uid", targetId);
+            if (userFriendService.count(wrapper2) > 0)
+                throw new IMException(ExceptionCodeEnum.HAD_IN_FRIEND_RELATIONSHIP);
+        // 入群申请
+        } else {
+            // 群是否存在以及是否已经是群员
+            QueryWrapper<GroupInfo> wrapper3 = new QueryWrapper<>();
+            // 同时查出群主id，需要将其作为apply记录的to_uid
+            wrapper3.eq("id", targetId).select("master_uid");
+            groupInfo = groupInfoService.getOne(wrapper3);
+            if (groupInfo == null)
+                throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
+
+            QueryWrapper<GroupUsers> wrapper4 = new QueryWrapper<>();
+            wrapper4.eq("group_id", targetId).eq("user_id", curUid);
+            if (groupUsersService.count(wrapper4) > 0)
+                throw new IMException(ExceptionCodeEnum.HAD_BEEN_A_MEMBER);
+        }
+
+        // 是否已发出过申请并且还未处理
+        QueryWrapper<Apply> wrapper5 = new QueryWrapper<>();
         Apply condition = new Apply();
         condition.setSenderUid(curUid);
-        condition.setToUid(friendUid);
-        condition.setType(Apply.FRIEND_APPLY);
+        // 类型不同，targetId代表的含义不同
+        if (type == Apply.FRIEND_APPLY)
+            condition.setToUid(targetId);
+        else {
+            condition.setToUid(groupInfo.getMasterUid());
+            condition.setGroupId(targetId);
+        }
+
+        condition.setType(type);
         /*
         * 这里状态限定为【处理中】，若是已同意，则在上个if中会抛异常
         * 若是已被拒绝，则可以再次添加
         * */
         condition.setStatus(Apply.DEALING);
-        wrapper3.setEntity(condition);
-        if (applyService.count(wrapper3) > 0)
+        wrapper5.setEntity(condition);
+        if (applyService.count(wrapper5) > 0)
             throw new IMException(ExceptionCodeEnum.HAD_SEND_APPLY);
 
         /*
-        * 插入申请记录
+        * 不存在则插入申请记录
         * */
-        Apply apply = new Apply();
-        apply.setSenderUid(curUid);
-        apply.setToUid(friendUid);
-        apply.setType(Apply.FRIEND_APPLY);
-        apply.setStatus(Apply.DEALING);
-        apply.setTime(LocalDateTime.now());
-        if (!applyService.save(apply))
+        condition.setId(null);
+        condition.setStatus(Apply.DEALING);
+        condition.setTime(LocalDateTime.now());
+
+        if (!applyService.save(condition))
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
@@ -395,12 +443,15 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         dto.setSenderAvatar(user.getAvatar());
 
         /*
-        * 若是群邀请，查询群名
+        * 若是群邀请或入群申请，查询群名
         * */
-        if (dto.getType().equals(Apply.GROUP_APPLY)) {
+        Integer type = dto.getType();
+        if (type.equals(Apply.GROUP_INVITATION) || type.equals(Apply.GROUP_APPLY)) {
             QueryWrapper<GroupInfo> wrapper2 = new QueryWrapper<>();
             wrapper2.eq("id", dto.getGroupId()).select("name");
             GroupInfo info = groupInfoService.getOne(wrapper2);
+            if (info == null)
+                throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
             dto.setGroupName(info.getName());
         }
 

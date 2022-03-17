@@ -24,10 +24,11 @@ public class Apply implements Serializable {
     public static final int REJECTED = 2;
 
     /*
-    * 2种类型：好友申请、群聊邀请
+    * 3种类型：好友申请、群聊邀请、入群申请
     * */
     public static final int FRIEND_APPLY = 1;
-    public static final int GROUP_APPLY = 2;
+    public static final int GROUP_INVITATION = 2;
+    public static final int GROUP_APPLY = 3;
 
     private static final long serialVersionUID = 1L;
 

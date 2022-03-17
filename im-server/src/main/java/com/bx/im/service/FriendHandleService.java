@@ -46,10 +46,11 @@ public interface FriendHandleService {
     void quitGroup(Long uid, Long groupId);
 
     /**
-     * 申请添加好友，发出好友申请
-     * @param friendUid
+     * 申请添加好友或申请入群
+     * @param targetId 目标用户id；或目标群id
+     * @param type 申请类型
      */
-    void sendFriendApply(Long friendUid);
+    void sendApply(Long targetId, Integer type);
 
     /**
      * 根据关键词在name和phone字段中搜索用户和群

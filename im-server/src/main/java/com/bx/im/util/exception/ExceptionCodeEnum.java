@@ -20,7 +20,8 @@ public enum  ExceptionCodeEnum implements IExceptionCode {
     NOT_GROUP_MEMBER(1010, "你不是该群成员"),
     NO_SUCH_USER(1011, "该用户不存在"),
     HAD_IN_FRIEND_RELATIONSHIP(1012, "已经是好友关系"),
-    HAD_SEND_APPLY(1013, "已发出好友申请，等待对方处理");
+    HAD_SEND_APPLY(1013, "已发出申请，请等待处理"),
+    HAD_BEEN_A_MEMBER(1014, "已经是该群成员");
 
 
     private Integer code;

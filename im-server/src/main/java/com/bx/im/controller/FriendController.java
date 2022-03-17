@@ -99,15 +99,18 @@ public class FriendController {
         return CommonResult.success();
     }
 
-    @PostMapping("/apply/friend")
-    public CommonResult sendFriendApply(Long friendUid) {
-        friendHandleService.sendFriendApply(friendUid);
+    @PostMapping("/apply")
+    public CommonResult sendApply(Long targetId, Integer type) {
+        if (targetId == null || type == null)
+            throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
+
+        friendHandleService.sendApply(targetId, type);
         return CommonResult.success();
     }
 
 
     @GetMapping("/search")
-    public CommonResult<List<ItemDTO>> searchUsers(String keyword) {
+    public CommonResult<List<ItemDTO>> search(String keyword) {
         List<ItemDTO> userDTOS = friendHandleService.searchUserAndGroup(keyword);
         return CommonResult.success(userDTOS);
     }
