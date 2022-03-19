@@ -2,7 +2,7 @@ package com.bx.im.controller;
 
 import com.bx.im.dto.*;
 import com.bx.im.util.CommonResult;
-import com.bx.im.service.ChatService;
+import com.bx.im.service.application.ChatService;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
 import org.springframework.beans.factory.annotation.Autowired;

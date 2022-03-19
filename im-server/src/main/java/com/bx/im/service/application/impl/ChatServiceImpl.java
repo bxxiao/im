@@ -1,4 +1,4 @@
-package com.bx.im.service.impl;
+package com.bx.im.service.application.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -8,7 +8,7 @@ import com.bx.im.entity.*;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
 import com.bx.im.websocket.ChannelContext;
-import com.bx.im.service.ChatService;
+import com.bx.im.service.application.ChatService;
 import com.bx.im.service.bean.*;
 import com.bx.im.util.IMConstant;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +20,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.bx.im.util.SpringUtils.getUidInToken;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -115,6 +117,7 @@ public class ChatServiceImpl implements ChatService {
             result.setMsgs(collect);
 
             // TODO：若群成员过多，在前端按需请求更好？
+            // TODO：bug：群成员被踢走后，消息不会被删除，但这里将不能查到头像
             // 获取群成员的头像信息
             Map<Long, String> avatarMap = queryGroupAvatarMap(toId);
             result.setAvatarMap(avatarMap);
@@ -259,13 +262,6 @@ public class ChatServiceImpl implements ChatService {
         wrapper.eq("user_id", curUid).eq("to_id", toId).eq("type", type);
         if (!sessionService.remove(wrapper))
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
-    }
-
-    private Long getUidInToken() {
-        HttpServletRequest request =
-                ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
-        Long uidInToken = (Long) request.getAttribute(IMConstant.TOKEN_UID_KEY);
-        return uidInToken;
     }
 
     /*

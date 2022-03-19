@@ -1,4 +1,4 @@
-package com.bx.im.service.impl;
+package com.bx.im.service.application.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -8,7 +8,7 @@ import com.bx.im.dto.FriendDTO;
 import com.bx.im.dto.GroupDTO;
 import com.bx.im.dto.ItemDTO;
 import com.bx.im.entity.*;
-import com.bx.im.service.FriendHandleService;
+import com.bx.im.service.application.FriendHandleService;
 import com.bx.im.service.bean.*;
 import com.bx.im.util.IMConstant;
 import com.bx.im.util.exception.ExceptionCodeEnum;
@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.bx.im.util.SpringUtils.checkUser;
+import static com.bx.im.util.SpringUtils.getUidInToken;
 
 @Service
 public class FriendHandleServiceImpl implements FriendHandleService {
@@ -115,6 +118,8 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 groupUsers.setGroupId(apply.getGroupId());
                 groupUsers.setUserId(apply.getToUid());
                 groupUsersService.save(groupUsers);
+                // redis中设置该用户的last_MsgSeq
+                redisService.initLastSeq(apply.getToUid(), apply.getGroupId());
                 /*
                 * TODO：发一个新成员入群通知？
                 * */
@@ -134,6 +139,8 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 groupUsers.setUserId(apply.getSenderUid());
                 if (!groupUsersService.save(groupUsers))
                     throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+                // redis中设置该用户的last_MsgSeq
+                redisService.initLastSeq(apply.getSenderUid(), apply.getGroupId());
             } else
                 throw new IMException(ExceptionCodeEnum.NO_SUCH_TYPE);
         }
@@ -145,7 +152,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     }
 
     @Override
-    public List<FriendDTO> listFriends(Long uid) {
+    public List<FriendDTO> listFriends(Long uid, Boolean online) {
         QueryWrapper<UserFriend> wrapper = new QueryWrapper<>();
         wrapper.eq("uid", uid).select("friend_uid");
         /*
@@ -163,7 +170,8 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             FriendDTO friendDTO = new FriendDTO();
             BeanUtils.copyProperties(user, friendDTO);
             // 从redis中查询用户是否在线
-            friendDTO.setIsOnline(redisService.isUserOnline(friendDTO.getId()));
+            if (online)
+                friendDTO.setIsOnline(redisService.isUserOnline(friendDTO.getId()));
             return friendDTO;
         }).collect(Collectors.toList());
 
@@ -212,7 +220,8 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         wrapper.eq("group_id", groupId).eq("user_id", deleted);
         if (!groupUsersService.remove(wrapper))
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
-
+        // 移除在 USER_LAST_GMSG_SEQ_ 中对应的字段
+        redisService.removeLastSeqKey(deleted, groupId);
     }
 
     @Override
@@ -240,12 +249,14 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             throw new IMException(ExceptionCodeEnum.NOT_GROUP_MEMBER);
 
         // TODO：群主暂时不支持该操作（可以改为群主退出群聊时自动选择一个新群主）
-        // TODO：group_users表加个事件字段
+        // TODO：group_users表加个时间字段
         if (isMaster(groupId, uid))
             throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
 
         if (!groupUsersService.remove(wrapper))
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+        // 移除在 USER_LAST_GMSG_SEQ_ 中对应的字段
+        redisService.removeLastSeqKey(uid, groupId);
     }
 
     @Override
@@ -391,26 +402,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         return dto;
     }
 
-    /**
-     * 检查发出请求的用户（token中的uid）跟请求中的用户id参数是否一致，不一致则抛出异常
-     * @param uid
-     */
-    private void checkUser(Long uid) {
-        Long uidInToken = getUidInToken();
-        if (uidInToken == null || !uidInToken.equals(uid))
-            throw new IMException(ExceptionCodeEnum.OPERATION_ILLEGAL);
-    }
 
-    /**
-     * 在拦截器中，解析jwt后会把其中的uid放入request的属性中，从中取出
-     * @return
-     */
-    private Long getUidInToken() {
-        HttpServletRequest request =
-                ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
-        Long uidInToken = (Long) request.getAttribute(IMConstant.TOKEN_UID_KEY);
-        return uidInToken;
-    }
 
     /**
      * 指定用户是否是指定群的群主

@@ -4,7 +4,7 @@ import com.bx.im.dto.ApplyDTO;
 import com.bx.im.dto.FriendDTO;
 import com.bx.im.dto.GroupDTO;
 import com.bx.im.dto.ItemDTO;
-import com.bx.im.service.FriendHandleService;
+import com.bx.im.service.application.FriendHandleService;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/friend/")
-public class FriendController {
+public class FriendHandleController {
 
     @Autowired
     private FriendHandleService friendHandleService;
@@ -52,8 +52,8 @@ public class FriendController {
     }
 
     @GetMapping("/listFriends")
-    public CommonResult<List<FriendDTO>> listFriends(Long uid) {
-        List<FriendDTO> dtos = friendHandleService.listFriends(uid);
+    public CommonResult<List<FriendDTO>> listFriends(Long uid, Boolean online) {
+        List<FriendDTO> dtos = friendHandleService.listFriends(uid, online);
         return CommonResult.success(dtos);
     }
 

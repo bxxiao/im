@@ -166,5 +166,25 @@ public interface RedisService {
      */
     Set<GroupMsgDTO> getHistoryMsgs(Long groupId, Long msgSeq);
 
+    /**
+     * 新成员入群时，设置在该群的last_msgSeq
+     * @param uid
+     * @param groupId
+     */
+    void initLastSeq(Long uid, Long groupId);
+
+    /**
+     * 新建群时，初始化群的序列号键
+     * @param groupId
+     */
+    void initGroupSeqKey(Long groupId);
+
+    /**
+     * 用户退出或被踢出群聊后，移除在 USER_LAST_GMSG_SEQ_ 中对应的字段
+     * @param uid
+     * @param groupId
+     */
+    void removeLastSeqKey(Long uid, Long groupId);
+
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

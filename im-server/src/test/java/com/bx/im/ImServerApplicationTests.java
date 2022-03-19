@@ -11,8 +11,8 @@ import com.bx.im.dto.*;
 import com.bx.im.entity.ChatSession;
 import com.bx.im.entity.FriendMsg;
 import com.bx.im.entity.UserFriend;
-import com.bx.im.service.ChatService;
-import com.bx.im.service.FriendHandleService;
+import com.bx.im.service.application.ChatService;
+import com.bx.im.service.application.FriendHandleService;
 import com.bx.im.service.bean.IChatSessionService;
 import com.bx.im.service.bean.IFriendMsgService;
 import com.bx.im.service.bean.IUserFriendService;
@@ -22,12 +22,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.connection.RedisZSetCommands;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SpringBootTest
@@ -185,14 +183,6 @@ class ImServerApplicationTests {
 
     @Autowired
     private FriendHandleService friendHandleService;
-
-    @Test
-    public void testListFriends() {
-        List<FriendDTO> dtos = friendHandleService.listFriends(2L);
-        for (FriendDTO dto : dtos) {
-            System.out.println(dto);
-        }
-    }
 
     @Test
     public void testGetHistoryMsgs() {

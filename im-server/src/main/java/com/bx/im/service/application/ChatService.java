@@ -1,4 +1,4 @@
-package com.bx.im.service;
+package com.bx.im.service.application;
 
 import com.bx.im.dto.*;
 

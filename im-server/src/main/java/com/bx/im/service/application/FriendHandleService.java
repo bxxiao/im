@@ -1,4 +1,4 @@
-package com.bx.im.service;
+package com.bx.im.service.application;
 
 import com.bx.im.dto.ApplyDTO;
 import com.bx.im.dto.FriendDTO;
@@ -24,7 +24,10 @@ public interface FriendHandleService {
      */
     boolean dealApply(Integer id, Integer dealResult);
 
-    List<FriendDTO> listFriends(Long uid);
+    /*
+    * online表示是否查询好友是否在线
+    * */
+    List<FriendDTO> listFriends(Long uid, Boolean online);
 
     List<GroupDTO> listGroups(Long uid);
 

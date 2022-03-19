@@ -194,5 +194,20 @@ public class RedisServiceImpl implements RedisService {
         return set;
     }
 
+    @Override
+    public void initLastSeq(Long uid, Long groupId) {
+        redisTemplate.opsForHash().put(USER_LAST_MSG_SEQ_PRE + uid, groupId.toString(), "0");
+    }
+
+    @Override
+    public void initGroupSeqKey(Long groupId) {
+        redisTemplate.opsForValue().set(GROUP_MSG_SEQ_PRE + groupId, 0L);
+    }
+
+    @Override
+    public void removeLastSeqKey(Long uid, Long groupId) {
+        redisTemplate.opsForHash().delete(USER_LAST_MSG_SEQ_PRE + uid, groupId.toString());
+    }
+
 
 }
