@@ -52,6 +52,9 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private IChatSessionService chatSessionService;
+
 
     // TODO：可以不用uid这个参数
     @Override
@@ -200,6 +203,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         return groupDTOS;
     }
 
+    @Transactional
     @Override
     public void deleteGroupMember(Long uid, Long groupId, Long deleted) {
         /*
@@ -216,12 +220,18 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         if (deleted.equals(uid))
             throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
 
+        // TODO：抽取公共代码（quitGroup中）
         QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
         wrapper.eq("group_id", groupId).eq("user_id", deleted);
         if (!groupUsersService.remove(wrapper))
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
         // 移除在 USER_LAST_GMSG_SEQ_ 中对应的字段
         redisService.removeLastSeqKey(deleted, groupId);
+
+        // 移除会话
+        QueryWrapper<ChatSession> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("user_id", uid).eq("to_id", groupId).eq("type", IMConstant.GROUP_CHAT_TYPE);
+        chatSessionService.remove(wrapper1);
     }
 
     @Override
@@ -238,6 +248,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
+    @Transactional
     @Override
     public void quitGroup(Long uid, Long groupId) {
         checkUser(uid);
@@ -257,6 +268,11 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
         // 移除在 USER_LAST_GMSG_SEQ_ 中对应的字段
         redisService.removeLastSeqKey(uid, groupId);
+
+        // 移除会话
+        QueryWrapper<ChatSession> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("user_id", uid).eq("to_id", groupId).eq("type", IMConstant.GROUP_CHAT_TYPE);
+        chatSessionService.remove(wrapper1);
     }
 
     @Override
