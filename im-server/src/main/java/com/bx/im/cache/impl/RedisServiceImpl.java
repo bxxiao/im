@@ -209,5 +209,32 @@ public class RedisServiceImpl implements RedisService {
         redisTemplate.opsForHash().delete(USER_LAST_MSG_SEQ_PRE + uid, groupId.toString());
     }
 
+    @Override
+    public void dissolveGroup(Long groupId, List<Long> memberIds) {
+        /*
+        * *      群消息记录
+         *      群消息序列号key
+         *      各群成员在该群的last_msgSeq
+        * */
+        SessionCallback transaction = new SessionCallback() {
+            @Override
+            public Object execute(RedisOperations operations) throws DataAccessException {
+                operations.multi();
+                // 删除群消息记录（zset和set）
+                redisTemplate.delete(GROUP_MSGS_PRE + groupId);
+                redisTemplate.delete(GROUP_MSGS_ID_SET_PRE + groupId);
+                // 删除序列号生成键
+                redisTemplate.delete(GROUP_MSG_SEQ_PRE + groupId);
+                // 删除各群成员在该群的last_msgSeq
+                for (int i = 0; i < memberIds.size(); i++)
+                    redisTemplate.opsForHash().delete(USER_LAST_MSG_SEQ_PRE + memberIds.get(i), groupId.toString());
+
+                return operations.exec();
+            }
+        };
+
+        redisTemplate.execute(transaction);
+    }
+
 
 }

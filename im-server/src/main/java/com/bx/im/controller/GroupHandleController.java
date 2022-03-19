@@ -1,6 +1,7 @@
 package com.bx.im.controller;
 
 import com.bx.im.dto.GroupCreateParam;
+import com.bx.im.dto.GroupInviteParam;
 import com.bx.im.service.application.GroupHandleService;
 import com.bx.im.util.CommonResult;
 import com.bx.im.util.exception.ExceptionCodeEnum;
@@ -39,6 +40,18 @@ public class GroupHandleController {
             throw new IMException(ExceptionCodeEnum.PARAM_ERROR);
 
         groupHandleService.createGroup(param.getMasterUid(), param.getMembers(), param.getGroupName());
+        return CommonResult.success();
+    }
+
+    @PostMapping("/invite")
+    public CommonResult inviteFriends(GroupInviteParam param) {
+        groupHandleService.invite(param.getFriendIds(), param.getGroupId());
+        return CommonResult.success();
+    }
+
+    @PostMapping("/dissolve")
+    public CommonResult dissolveGroup(Long masterUid, Long groupId) {
+        groupHandleService.dissolveGroup(masterUid, groupId);
         return CommonResult.success();
     }
 }

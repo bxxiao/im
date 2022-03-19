@@ -234,6 +234,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         chatSessionService.remove(wrapper1);
     }
 
+    @Transactional
     @Override
     public void deleteFriend(Long uid, Long friendUid) {
         checkUser(uid);
@@ -244,8 +245,21 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         if (userFriendService.count(wrapper) <= 0)
             throw new IMException(ExceptionCodeEnum.NOT_FRIEND_RELATIONSHIP);
 
-        if (!userFriendService.remove(wrapper))
-            throw new IMException(ExceptionCodeEnum.REQUEST_ERROR);
+        userFriendService.remove(wrapper);
+        // 两边关系互删
+        wrapper.clear();
+        wrapper.eq("uid", friendUid).eq("friend_uid", uid);
+        userFriendService.remove(wrapper);
+
+
+        // 移除会话，会话项同样互删
+        QueryWrapper<ChatSession> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("user_id", uid).eq("to_id", friendUid).eq("type", IMConstant.SINGLE_CHAT_TYPE);
+        chatSessionService.remove(wrapper1);
+
+        wrapper1.clear();
+        wrapper1.eq("user_id", friendUid).eq("to_id", uid).eq("type", IMConstant.SINGLE_CHAT_TYPE);
+        chatSessionService.remove(wrapper1);
     }
 
     @Transactional

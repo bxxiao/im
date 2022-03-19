@@ -58,6 +58,9 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
     }
 
 
+    /*
+     * TODO：判断对端是否是好友，若不是拒绝发送消息
+     * */
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
         wrapper.eq("msg_id", chatMsg.getMsgId());

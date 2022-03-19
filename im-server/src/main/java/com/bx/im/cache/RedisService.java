@@ -186,5 +186,15 @@ public interface RedisService {
      */
     void removeLastSeqKey(Long uid, Long groupId);
 
+    /**
+     * 群解散后，在redis中使用事务删除相关数据：
+     *      群消息记录
+     *      群消息序列号key
+     *      各群成员在该群的last_msgSeq
+     * @param groupId
+     * @param memberIds
+     */
+    void dissolveGroup(Long groupId, List<Long> memberIds);
+
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

@@ -15,4 +15,13 @@ public interface GroupHandleService {
      * @param groupName
      */
     void createGroup(Long masterUid, List<Long> members, String groupName);
+
+    void invite(List<Long> friendIds, Long groupId);
+
+    /**
+     * 解散群
+     * @param masterUid
+     * @param groupId
+     */
+    void dissolveGroup(Long masterUid, Long groupId);
 }
