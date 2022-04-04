@@ -59,7 +59,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
 
 
     /*
-     * TODO：判断对端是否是好友，若不是拒绝发送消息
+     *
      * */
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
@@ -98,6 +98,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         // 设置消息序列号
         ChatMsgProto.ChatMsg msgToSend = chatMsg.toBuilder().setMsgSeq(redisService.getGroupMsgSeq(groupId)).build();
         GroupMsgDTO groupMsgDTO = toGroupMsgDTO(msgToSend);
+        groupMsgDTO.setUsername(chatMsg.getUsername());
         /*
         * 该方法的操作包括：存消息，存消息id，更新last_msgSeq（一个事务中执行）
         * */
@@ -148,6 +149,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         msg.setMsgContent(chatMsg.getContent());
         msg.setTime(LocalDateTime.parse(chatMsg.getTime(), DateTimeFormatter.ISO_DATE_TIME));
         msg.setHasRead(false);
+        msg.setMsgType(chatMsg.getType());
 
         return msg;
     }
@@ -160,6 +162,8 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         dto.setFromUid(chatMsg.getFromUid());
         dto.setContent(chatMsg.getContent());
         dto.setTime(chatMsg.getTime());
+        dto.setType(chatMsg.getContentType());
+        dto.setHasCancel(false);
 
         return dto;
     }

@@ -19,12 +19,7 @@ import java.util.Map;
 public class Test {
 
     public static void main(String[] args) {
-        // testProtoTimestamp();
-        // testProtoBufToBuilder();
-
-        // testJJWT();
-        // testJJWTExpiration();
-        // testJwtUtil();
+        System.out.println("abx".substring(0, 0));
     }
 
     private static int testTryCatch() {

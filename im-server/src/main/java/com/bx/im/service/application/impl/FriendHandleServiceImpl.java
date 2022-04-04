@@ -117,6 +117,13 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 * */
             // 群聊邀请
             } else if (apply.getType() == Apply.GROUP_INVITATION) {
+                QueryWrapper<GroupInfo> groupInfoWrapper = new QueryWrapper<>();
+                groupInfoWrapper.eq("id", apply.getGroupId()).eq("deleted", 0);
+                if (groupInfoService.count(groupInfoWrapper) == 0)
+                    /*
+                    * TODO：对应申请应该删除或修改状态
+                    * */
+                    throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
                 GroupUsers groupUsers = new GroupUsers();
                 groupUsers.setGroupId(apply.getGroupId());
                 groupUsers.setUserId(apply.getToUid());
@@ -129,7 +136,7 @@ public class FriendHandleServiceImpl implements FriendHandleService {
             // 入群申请
             } else if (apply.getType() == Apply.GROUP_APPLY) {
                 QueryWrapper<GroupInfo> groupInfoWrapper = new QueryWrapper<>();
-                groupInfoWrapper.eq("id", apply.getGroupId()).select("master_uid");
+                groupInfoWrapper.eq("id", apply.getGroupId()).eq("deleted", 0).select("master_uid");
                 GroupInfo groupInfo = groupInfoService.getOne(groupInfoWrapper);
                 if (groupInfo == null)
                     throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);

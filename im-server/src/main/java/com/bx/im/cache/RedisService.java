@@ -53,6 +53,12 @@ public interface RedisService {
     * */
     String GROUP_ALL_MEMBERS_PRE = "GROUP_ALL_MEMBERS_";
 
+    /*
+    * Set
+    * 群聊消息被撤回的消息id
+    * */
+    String GROUP_CANCELED_MSG_IDS_PRE = "GROUP_CANCELED_MSG_IDS_";
+
     //======================通用>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     void userOnline(Long uid);
@@ -115,9 +121,10 @@ public interface RedisService {
     /**
      * 从对应群的zset中获取最后一条消息
      * @param groupId
+     * @param curUid
      * @return
      */
-    GroupMsgDTO getLastGroupMsg(Long groupId);
+    GroupMsgDTO getLastGroupMsg(Long groupId, Long curUid);
 
     /**
      * 获取指定用户在指定群的最后消息序列号
@@ -195,6 +202,8 @@ public interface RedisService {
      * @param memberIds
      */
     void dissolveGroup(Long groupId, List<Long> memberIds);
+
+    void setMsgCanceled(Long groupId, String msgId);
 
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

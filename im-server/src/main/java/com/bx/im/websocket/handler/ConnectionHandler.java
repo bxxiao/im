@@ -40,7 +40,8 @@ public class ConnectionHandler extends ChannelInboundHandlerAdapter {
             IdleState state = ((IdleStateEvent) evt).state();
             if (IdleState.READER_IDLE == state) {
                 Session session = userOffline(ctx);
-                System.out.println(session.toString() + " lose connection");
+                if (session != null)
+                    System.out.println(session.toString() + " lose connection");
                 ctx.close();
             }
         } else

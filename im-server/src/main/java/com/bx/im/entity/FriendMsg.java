@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author bx
- * @since 2022-02-23
+ * @since 2022-04-04
  */
 @TableName("friend_msg")
 public class FriendMsg implements Serializable {
@@ -38,8 +38,6 @@ public class FriendMsg implements Serializable {
      */
     private Long senderUid;
 
-    private Long toUid;
-
     /**
      * 消息类型，目前只有文本消息；后续可作扩展用
      */
@@ -53,6 +51,11 @@ public class FriendMsg implements Serializable {
      * 1：已读；0：未读（默认）
      */
     private Boolean hasRead;
+
+    private Long toUid;
+
+    private Boolean hasCancel;
+
 
     public Long getId() {
         return id;
@@ -78,12 +81,12 @@ public class FriendMsg implements Serializable {
         this.msgSeq = msgSeq;
     }
 
-    public Long getToUid() {
-        return toUid;
+    public Long getSenderUid() {
+        return senderUid;
     }
 
-    public void setToUid(Long toUid) {
-        this.toUid = toUid;
+    public void setSenderUid(Long senderUid) {
+        this.senderUid = senderUid;
     }
 
     public Integer getMsgType() {
@@ -118,12 +121,20 @@ public class FriendMsg implements Serializable {
         this.hasRead = hasRead;
     }
 
-    public Long getSenderUid() {
-        return senderUid;
+    public Long getToUid() {
+        return toUid;
     }
 
-    public void setSenderUid(Long senderUid) {
-        this.senderUid = senderUid;
+    public void setToUid(Long toUid) {
+        this.toUid = toUid;
+    }
+
+    public Boolean getHasCancel() {
+        return hasCancel;
+    }
+
+    public void setHasCancel(Boolean hasCancel) {
+        this.hasCancel = hasCancel;
     }
 
     @Override
@@ -132,12 +143,13 @@ public class FriendMsg implements Serializable {
         "id=" + id +
         ", msgId=" + msgId +
         ", msgSeq=" + msgSeq +
-        ", toUid=" + toUid +
+        ", senderUid=" + senderUid +
         ", msgType=" + msgType +
         ", msgContent=" + msgContent +
         ", time=" + time +
         ", hasRead=" + hasRead +
-        ", senderUid=" + senderUid +
+        ", toUid=" + toUid +
+        ", hasCancel=" + hasCancel +
         "}";
     }
 }

@@ -15,4 +15,13 @@ public class ChatMsgDTO {
     private String time;
     // 仅对单聊
     private Boolean hasRead;
+
+    // 仅对群里
+    private String username;
+
+    private Boolean isFile;
+    private String fileName;
+
+    // 是否已撤回
+    private Boolean hasCancel;
 }

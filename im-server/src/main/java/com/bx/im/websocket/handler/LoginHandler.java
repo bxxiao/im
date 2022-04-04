@@ -16,9 +16,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/*
-* TODO:用户在线状态的登记改为在Redis中存储
-* */
 @ChannelHandler.Sharable
 @Component
 public class LoginHandler extends SimpleChannelInboundHandler<LoginProto.Login> {

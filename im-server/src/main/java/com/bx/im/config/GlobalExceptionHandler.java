@@ -20,6 +20,10 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public CommonResult handleIMException(HttpServletRequest request, HttpServletResponse response, IMException exception) {
         System.out.println("捕获到异常：" + exception.toString());
+        /*
+        * TODO:用更好的方法打印异常位置？
+        * */
+        exception.printStackTrace();
         return CommonResult.error(exception.getCode(), exception.getMessage());
     }
 

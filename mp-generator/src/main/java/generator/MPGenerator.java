@@ -42,7 +42,7 @@ public class MPGenerator {
         Consumer<StrategyConfig.Builder> strategyConfig = builder -> {
             // 指定要生成文件的表名
             // builder.addInclude("user_friend", "friend_msg", "friend_ask");
-            builder.addInclude("group_info");
+            builder.addInclude("friend_msg");
                 // 过滤表前缀
                 // .addTablePrefix("t_", "c_");
         };

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+import "google/protobuf/timestamp.proto";
+
+/*
+  消息撤回
+*/
+message MsgCancel {
+  string msgId = 1;
+  // 1-单聊；2-群聊
+  int32 type = 2;
+  //
+  int64 toId = 3;
+}

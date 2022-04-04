@@ -1,11 +1,8 @@
 package com.bx.im.websocket;
 
 import com.bx.im.websocket.codec.IMPacketEncoder;
-import com.bx.im.websocket.handler.ChatMsgHandler;
-import com.bx.im.websocket.handler.ConnectionHandler;
-import com.bx.im.websocket.handler.LoginHandler;
+import com.bx.im.websocket.handler.*;
 import com.bx.im.websocket.codec.WSFrameDecoder;
-import com.bx.im.websocket.handler.MsgReadHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -59,6 +56,7 @@ public class WSChannelInitializer extends ChannelInitializer<NioSocketChannel> i
         pipeline.addLast(appContext.getBean(ChatMsgHandler.class));
         pipeline.addLast(appContext.getBean(MsgReadHandler.class));
         pipeline.addLast(appContext.getBean(ConnectionHandler.class));
+        pipeline.addLast(appContext.getBean(MsgCancelHandler.class));
 
         pipeline.addLast(new IMPacketEncoder());
 

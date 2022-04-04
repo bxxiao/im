@@ -93,6 +93,36 @@ public final class ChatMsgProto {
      */
     com.google.protobuf.ByteString
         getTimeBytes();
+
+    /**
+     * <pre>
+     * 内容类型 1-文本；2-文件，这时content是url
+     * </pre>
+     *
+     * <code>int32 contentType = 8;</code>
+     * @return The contentType.
+     */
+    int getContentType();
+
+    /**
+     * <pre>
+     * 发送者名字
+     * </pre>
+     *
+     * <code>string username = 9;</code>
+     * @return The username.
+     */
+    java.lang.String getUsername();
+    /**
+     * <pre>
+     * 发送者名字
+     * </pre>
+     *
+     * <code>string username = 9;</code>
+     * @return The bytes for username.
+     */
+    com.google.protobuf.ByteString
+        getUsernameBytes();
   }
   /**
    * <pre>
@@ -114,6 +144,7 @@ public final class ChatMsgProto {
       msgId_ = "";
       content_ = "";
       time_ = "";
+      username_ = "";
     }
 
     @java.lang.Override
@@ -182,6 +213,17 @@ public final class ChatMsgProto {
               java.lang.String s = input.readStringRequireUtf8();
 
               time_ = s;
+              break;
+            }
+            case 64: {
+
+              contentType_ = input.readInt32();
+              break;
+            }
+            case 74: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              username_ = s;
               break;
             }
             default: {
@@ -390,6 +432,67 @@ public final class ChatMsgProto {
       }
     }
 
+    public static final int CONTENTTYPE_FIELD_NUMBER = 8;
+    private int contentType_;
+    /**
+     * <pre>
+     * 内容类型 1-文本；2-文件，这时content是url
+     * </pre>
+     *
+     * <code>int32 contentType = 8;</code>
+     * @return The contentType.
+     */
+    @java.lang.Override
+    public int getContentType() {
+      return contentType_;
+    }
+
+    public static final int USERNAME_FIELD_NUMBER = 9;
+    private volatile java.lang.Object username_;
+    /**
+     * <pre>
+     * 发送者名字
+     * </pre>
+     *
+     * <code>string username = 9;</code>
+     * @return The username.
+     */
+    @java.lang.Override
+    public java.lang.String getUsername() {
+      java.lang.Object ref = username_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        username_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * 发送者名字
+     * </pre>
+     *
+     * <code>string username = 9;</code>
+     * @return The bytes for username.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUsernameBytes() {
+      java.lang.Object ref = username_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        username_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -425,6 +528,12 @@ public final class ChatMsgProto {
       if (!getTimeBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 7, time_);
       }
+      if (contentType_ != 0) {
+        output.writeInt32(8, contentType_);
+      }
+      if (!getUsernameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 9, username_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -459,6 +568,13 @@ public final class ChatMsgProto {
       if (!getTimeBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, time_);
       }
+      if (contentType_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(8, contentType_);
+      }
+      if (!getUsernameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, username_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -488,6 +604,10 @@ public final class ChatMsgProto {
           .equals(other.getContent())) return false;
       if (!getTime()
           .equals(other.getTime())) return false;
+      if (getContentType()
+          != other.getContentType()) return false;
+      if (!getUsername()
+          .equals(other.getUsername())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -516,6 +636,10 @@ public final class ChatMsgProto {
       hash = (53 * hash) + getContent().hashCode();
       hash = (37 * hash) + TIME_FIELD_NUMBER;
       hash = (53 * hash) + getTime().hashCode();
+      hash = (37 * hash) + CONTENTTYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getContentType();
+      hash = (37 * hash) + USERNAME_FIELD_NUMBER;
+      hash = (53 * hash) + getUsername().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -667,6 +791,10 @@ public final class ChatMsgProto {
 
         time_ = "";
 
+        contentType_ = 0;
+
+        username_ = "";
+
         return this;
       }
 
@@ -700,6 +828,8 @@ public final class ChatMsgProto {
         result.toId_ = toId_;
         result.content_ = content_;
         result.time_ = time_;
+        result.contentType_ = contentType_;
+        result.username_ = username_;
         onBuilt();
         return result;
       }
@@ -770,6 +900,13 @@ public final class ChatMsgProto {
         }
         if (!other.getTime().isEmpty()) {
           time_ = other.time_;
+          onChanged();
+        }
+        if (other.getContentType() != 0) {
+          setContentType(other.getContentType());
+        }
+        if (!other.getUsername().isEmpty()) {
+          username_ = other.username_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -1196,6 +1333,145 @@ public final class ChatMsgProto {
         onChanged();
         return this;
       }
+
+      private int contentType_ ;
+      /**
+       * <pre>
+       * 内容类型 1-文本；2-文件，这时content是url
+       * </pre>
+       *
+       * <code>int32 contentType = 8;</code>
+       * @return The contentType.
+       */
+      @java.lang.Override
+      public int getContentType() {
+        return contentType_;
+      }
+      /**
+       * <pre>
+       * 内容类型 1-文本；2-文件，这时content是url
+       * </pre>
+       *
+       * <code>int32 contentType = 8;</code>
+       * @param value The contentType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentType(int value) {
+        
+        contentType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 内容类型 1-文本；2-文件，这时content是url
+       * </pre>
+       *
+       * <code>int32 contentType = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContentType() {
+        
+        contentType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object username_ = "";
+      /**
+       * <pre>
+       * 发送者名字
+       * </pre>
+       *
+       * <code>string username = 9;</code>
+       * @return The username.
+       */
+      public java.lang.String getUsername() {
+        java.lang.Object ref = username_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          username_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 发送者名字
+       * </pre>
+       *
+       * <code>string username = 9;</code>
+       * @return The bytes for username.
+       */
+      public com.google.protobuf.ByteString
+          getUsernameBytes() {
+        java.lang.Object ref = username_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          username_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 发送者名字
+       * </pre>
+       *
+       * <code>string username = 9;</code>
+       * @param value The username to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUsername(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        username_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 发送者名字
+       * </pre>
+       *
+       * <code>string username = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUsername() {
+        
+        username_ = getDefaultInstance().getUsername();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 发送者名字
+       * </pre>
+       *
+       * <code>string username = 9;</code>
+       * @param value The bytes for username to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUsernameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        username_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -1264,10 +1540,11 @@ public final class ChatMsgProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\022ChatMsgProto.proto\022\002im\032\037google/protobu" +
-      "f/timestamp.proto\"t\n\007ChatMsg\022\014\n\004type\030\001 \001" +
-      "(\005\022\r\n\005msgId\030\002 \001(\t\022\016\n\006msgSeq\030\003 \001(\003\022\017\n\007fro" +
-      "mUid\030\004 \001(\003\022\014\n\004toId\030\005 \001(\003\022\017\n\007content\030\006 \001(" +
-      "\t\022\014\n\004time\030\007 \001(\tB\021\n\017com.bx.im.protob\006prot" +
+      "f/timestamp.proto\"\233\001\n\007ChatMsg\022\014\n\004type\030\001 " +
+      "\001(\005\022\r\n\005msgId\030\002 \001(\t\022\016\n\006msgSeq\030\003 \001(\003\022\017\n\007fr" +
+      "omUid\030\004 \001(\003\022\014\n\004toId\030\005 \001(\003\022\017\n\007content\030\006 \001" +
+      "(\t\022\014\n\004time\030\007 \001(\t\022\023\n\013contentType\030\010 \001(\005\022\020\n" +
+      "\010username\030\t \001(\tB\021\n\017com.bx.im.protob\006prot" +
       "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
@@ -1280,7 +1557,7 @@ public final class ChatMsgProto {
     internal_static_im_ChatMsg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_im_ChatMsg_descriptor,
-        new java.lang.String[] { "Type", "MsgId", "MsgSeq", "FromUid", "ToId", "Content", "Time", });
+        new java.lang.String[] { "Type", "MsgId", "MsgSeq", "FromUid", "ToId", "Content", "Time", "ContentType", "Username", });
     com.google.protobuf.TimestampProto.getDescriptor();
   }
 

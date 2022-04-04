@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
 import com.bx.im.entity.*;
+import com.bx.im.util.SpringUtils;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
 import com.bx.im.websocket.ChannelContext;
@@ -14,10 +15,7 @@ import com.bx.im.util.IMConstant;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -332,11 +330,30 @@ public class ChatServiceImpl implements ChatService {
                     .or(i -> i.eq("sender_uid", dto.getToId()).eq("to_uid", uid))
                     .orderByDesc("msg_seq")
                     .last("limit 1")
-                    .select("msg_content", "time");
+                    .select("msg_content", "time", "msg_type", "has_cancel", "sender_uid");
             List<FriendMsg> list = friendMsgService.list(msgWrapper);
             if (!list.isEmpty()) {
-                dto.setLastMsg(list.get(0).getMsgContent());
-                dto.setTime(list.get(0).getTime().toString());
+
+                FriendMsg msg = list.get(0);
+                Long curUid = getUidInToken();
+                if (msg.getHasCancel()) {
+                    String content;
+                    if (curUid.equals(msg.getSenderUid()))
+                        content = "你 撤回了消息";
+                    else {
+                        QueryWrapper<User> wrapper = new QueryWrapper<>();
+                        wrapper.eq("id", msg.getSenderUid()).select("name");
+                        User user = userService.getOne(wrapper);
+                        content = user.getName() + " 撤回了消息";
+                    }
+
+                    dto.setLastMsg(content);
+                }
+                else if (msg.getMsgType() != null && msg.getMsgType() == 2)
+                    dto.setLastMsg("[文件]");
+                else
+                    dto.setLastMsg(msg.getMsgContent());
+                dto.setTime(msg.getTime().toString());
             }
         });
     }
@@ -384,12 +401,14 @@ public class ChatServiceImpl implements ChatService {
         // 查询最后一条消息
         sessionList.forEach(session -> {
             long gid = session.getToId();
-            GroupMsgDTO lastMsg = redisService.getLastGroupMsg(gid);
+            Long curUid = getUidInToken();
+            GroupMsgDTO lastMsg = redisService.getLastGroupMsg(gid, curUid);
             /*
             * 若为null，表示当前没有消息；这时不用设置属性，前端有对null和undefined值的处理
             * */
             if (lastMsg != null) {
-                session.setLastMsg(lastMsg.getContent());
+                String content = lastMsg.getType() != null && lastMsg.getType() == 2 ? "[文件]" : lastMsg.getContent();
+                session.setLastMsg(content);
                 session.setTime(lastMsg.getTime());
             }
         });
@@ -462,6 +481,17 @@ public class ChatServiceImpl implements ChatService {
         msgDTO.setContent(msg.getMsgContent());
         msgDTO.setTime(msg.getTime().toString());
         msgDTO.setHasRead(msg.getHasRead());
+        msgDTO.setHasCancel(msg.getHasCancel());
+        if (msg.getHasCancel())
+            msgDTO.setContent("");
+
+        if (msg.getMsgType() == 2) {
+            msgDTO.setIsFile(true);
+            int indexOf = msg.getMsgContent().lastIndexOf('/');
+            String filename = msg.getMsgContent().substring(indexOf + 1);
+            msgDTO.setFileName(filename);
+        }
+
         return msgDTO;
     }
 
@@ -474,6 +504,18 @@ public class ChatServiceImpl implements ChatService {
         msgDTO.setType(IMConstant.GROUP_CHAT_TYPE);
         msgDTO.setContent(msg.getContent());
         msgDTO.setTime(msg.getTime());
+        msgDTO.setUsername(msg.getUsername());
+        msgDTO.setHasCancel(msg.getHasCancel());
+
+        if (msg.getHasCancel())
+            msgDTO.setContent("");
+
+        if (msg.getType() != null && msg.getType() == 2) {
+            msgDTO.setIsFile(true);
+            int i = msg.getContent().lastIndexOf('/');
+            msgDTO.setFileName(msg.getContent().substring(i + 1));
+        }
+
         return msgDTO;
     }
 }

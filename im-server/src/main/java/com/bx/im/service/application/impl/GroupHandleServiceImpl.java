@@ -144,9 +144,6 @@ public class GroupHandleServiceImpl implements GroupHandleService {
      */
     private void sendGroupInvatations(Long sender, List<Long> toIds, Long groupId) {
         /*
-        * TODO：查询下是否已发送邀请（前端有进行过滤，一般不会已发送）
-        * */
-        /*
         * 发送申请（群聊邀请类型）
         * */
         List<Apply> applies = toIds.stream().map(id -> {

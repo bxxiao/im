@@ -104,14 +104,25 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public GroupMsgDTO getLastGroupMsg(Long groupId) {
+    public GroupMsgDTO getLastGroupMsg(Long groupId, Long curUid) {
         // 以score反序排序，取出第一个，就是最后一条消息
         Set<GroupMsgDTO> set = redisTemplate.opsForZSet().reverseRangeByScore(GROUP_MSGS_PRE + groupId, 0, Double.MAX_VALUE, 0, 1);
+        Set<String> canceled = redisTemplate.opsForSet().members(GROUP_CANCELED_MSG_IDS_PRE + groupId);
 
         if (set.size() > 0) {
             Iterator<GroupMsgDTO> iterator = set.iterator();
-            while (iterator.hasNext())
-                return iterator.next();
+            while (iterator.hasNext()) {
+                GroupMsgDTO next = iterator.next();
+                if (canceled.contains(next.getMsgId())) {
+                    String content = null;
+                    if (curUid.equals(next.getFromUid()))
+                        content = "你 撤回了消息";
+                    else
+                        content = next.getUsername() + " 撤回了消息";
+                    next.setContent(content);
+                }
+                return next;
+            }
         }
 
         return null;
@@ -127,6 +138,7 @@ public class RedisServiceImpl implements RedisService {
     public List<GroupMsgDTO> getNewGroupMsgs(Long uid, Long groupId) {
         Long lastMsgSeq = this.getGroupLastMsgSeq(uid, groupId);
         List<GroupMsgDTO> list = new ArrayList<>();
+        Set<String> canceledIdSet = redisTemplate.opsForSet().members(GROUP_CANCELED_MSG_IDS_PRE + groupId);
         // [...] （左右闭区间）
         /*
         * TODO：可以使用reverseRangeByScore(K key, double min, double max, long offset, long count)来更准确的获取10条旧消息
@@ -141,6 +153,10 @@ public class RedisServiceImpl implements RedisService {
         Iterator<GroupMsgDTO> iterator = set.iterator();
         while (iterator.hasNext()) {
             GroupMsgDTO next = iterator.next();
+            if (canceledIdSet.contains(next.getMsgId()))
+                next.setHasCancel(true);
+            else
+                next.setHasCancel(false);
             list.add(next);
         }
 
@@ -163,7 +179,6 @@ public class RedisServiceImpl implements RedisService {
                 Long uid = (Long) map.get("user_id");
                 return uid;
             }).collect(Collectors.toList());
-            System.out.println(userIds);
             // TODO：加上过期时间
             redisTemplate.opsForSet().add(allMembersKey, userIds.toArray());
         }
@@ -190,6 +205,15 @@ public class RedisServiceImpl implements RedisService {
         * min-max 是左右闭区间，msgSeq要减一
         * */
         Set<GroupMsgDTO> set = redisTemplate.opsForZSet().reverseRangeByScore(GROUP_MSGS_PRE + groupId, 0, msgSeq - 1, 0, 10);
+        Set<String> canceled = redisTemplate.opsForSet().members(GROUP_CANCELED_MSG_IDS_PRE + groupId);
+        Iterator<GroupMsgDTO> iterator = set.iterator();
+        while (iterator.hasNext()) {
+            GroupMsgDTO next = iterator.next();
+            if (canceled.contains(next.getMsgId()))
+                next.setHasCancel(true);
+            else
+                next.setHasCancel(false);
+        }
 
         return set;
     }
@@ -234,6 +258,11 @@ public class RedisServiceImpl implements RedisService {
         };
 
         redisTemplate.execute(transaction);
+    }
+
+    @Override
+    public void setMsgCanceled(Long groupId, String msgId) {
+        redisTemplate.opsForSet().add(GROUP_CANCELED_MSG_IDS_PRE + groupId, msgId);
     }
 
 

@@ -17,11 +17,13 @@ spring:
         max-idle: 8 # 连接池中的最大空闲连接
         min-idle: 0 # 连接池中的最小空闲连接
     timeout: 3000ms # 连接超时时间（毫秒）
-
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 30MB
 
 server:
   port: 8484
-
 
 jwt:
   secret: eyJ1aWQiOjY2LCJuYW1lIjoi5byg5LiJIiwiZXhwIjoxNjQ2MDUwMDczfQ

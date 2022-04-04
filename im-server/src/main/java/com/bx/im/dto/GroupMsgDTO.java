@@ -13,6 +13,10 @@ public class GroupMsgDTO implements Serializable {
     private String content;
     private String time;
 
+    private String username;
+
     // 预留，表示消息类型
     private Integer type;
+
+    private Boolean hasCancel;
 }
