@@ -1,5 +1,6 @@
 package com.bx.im.cache;
 
+import com.bx.im.dto.ChatMsgCache;
 import com.bx.im.dto.GroupMsgDTO;
 
 import java.util.List;
@@ -58,6 +59,20 @@ public interface RedisService {
     * 群聊消息被撤回的消息id
     * */
     String GROUP_CANCELED_MSG_IDS_PRE = "GROUP_CANCELED_MSG_IDS_";
+
+    /*
+    * Hash
+    * 存放被发送后的消息，进行可达性投递
+    * msgId——msg
+    * */
+    String SENDING_CACHE_MSGS_KEY = "SENDING_CACHE_MSGS";
+
+    /*
+    * Hash
+    * 记录SENDING_CACHE_MSGS的消息的投递用户id及其已重发次数
+    * 映射关系：uid——重发次数 3次后删除
+    * */
+    String RESEND_MSG_RECORDS_PRE = "RESEND_MSG_RECORDS_";
 
     //======================通用>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -204,6 +219,13 @@ public interface RedisService {
     void dissolveGroup(Long groupId, List<Long> memberIds);
 
     void setMsgCanceled(Long groupId, String msgId);
+
+    /**
+     * 消息被发送后进行可靠性投递
+     * @param msg
+     * @param targetUids
+     */
+    void setChatMsgInCheck(ChatMsgCache msg, Set<Long> targetUids);
 
     //=====================================群聊<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

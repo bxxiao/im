@@ -16,6 +16,7 @@ public class IMConstant {
      * 3 - MsgAckedNotice
      * 4 - MsgRead
      * 5 - MsgCancel
+     * 6 - MsgReceivedAck
      *
      * 401 - data无内容，表示登录时提交的token错误，发给客户端后channel关闭
      * 111 - ping包，data无内容
@@ -27,6 +28,7 @@ public class IMConstant {
     public static final int MSGACKNOTICE_PROTOBUF_TYPE = 3;
     public static final int MSGREAD_PROTOBUF_TYPE = 4;
     public static final int MSGCANCEL_PROTOBUF_TYPE = 5;
+    public static final int MSGRECEIVEDACK_PROTOBUF_TYPE = 6;
     public static final int PING_PROTOBUF_TYPE = 111;
     public static final int PONG_PROTOBUF_TYPE = 222;
     public static final int LOGIN_TOKEN_ERROR_PROTOBUF_TYPE = 401;

@@ -1,0 +1,13 @@
+syntax = "proto3";
+package im;
+option java_package = "com.bx.im.proto";
+
+import "google/protobuf/timestamp.proto";
+
+/*
+  单聊、群聊消息
+*/
+message MsgReceivedAck {
+  int64 uid = 1;
+  string msgId = 2;
+}

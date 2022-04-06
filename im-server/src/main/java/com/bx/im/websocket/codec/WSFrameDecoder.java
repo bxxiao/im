@@ -37,6 +37,7 @@ public class WSFrameDecoder extends MessageToMessageDecoder<WebSocketFrame> {
         parserMap.put(IMConstant.MSGACKNOTICE_PROTOBUF_TYPE, MsgAckedNoticeProto.MsgAckedNotice.parser());
         parserMap.put(IMConstant.MSGREAD_PROTOBUF_TYPE, MsgReadProto.MsgRead.parser());
         parserMap.put(IMConstant.MSGCANCEL_PROTOBUF_TYPE, MsgCancelProto.MsgCancel.parser());
+        parserMap.put(IMConstant.MSGRECEIVEDACK_PROTOBUF_TYPE, MsgReceivedAckProto.MsgReceivedAck.parser());
     }
 
     @Override

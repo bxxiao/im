@@ -234,24 +234,10 @@ class ImServerApplicationTests {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    /*
-     * 项目中放的数据，要让其被redis server持久化，要在客户端通过shutdown正常关闭，不然数据会丢失。。
-     * */
     @Test
     public void testRedisAPI() {
-        // User user = new User();
-        // user.setId(100L);
-        // user.setAvatar("hahaha");
-        // user.setName("胡歌");
-        // user.setPassword("666666");
-        // redisTemplate.opsForValue().set("user", user);
-
-        // redisTemplate.opsForValue().set("count", 0);
-        // Long count = redisTemplate.opsForValue().increment("count", 1);
-        // System.out.println(count);
-        // redisTemplate.delete("count");
-
-        redisTemplate.opsForValue().set("SINGE_MSG_SEQ_KEY", 20);
+        Long size = redisTemplate.opsForHash().size("xxx");
+        System.out.println(size);
     }
 
 }

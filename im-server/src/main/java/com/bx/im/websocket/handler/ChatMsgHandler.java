@@ -2,6 +2,7 @@ package com.bx.im.websocket.handler;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bx.im.cache.RedisService;
+import com.bx.im.dto.ChatMsgCache;
 import com.bx.im.dto.GroupMsgDTO;
 import com.bx.im.entity.FriendMsg;
 import com.bx.im.proto.ChatMsgProto;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Component
@@ -73,9 +75,13 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         // 获取序列号
         Long msgSeq = redisService.getSingleMsgSeq();
         msg.setMsgSeq(msgSeq);
-        // 入库成功，发送MsgAck包
-        if (msgService.save(msg))
+        // 入库成功，发送MsgAck包并把消息进行可达性投递
+        if (msgService.save(msg)) {
             sendMsgAckPacket(ctx, chatMsg);
+            Set<Long> uid = new LinkedHashSet<>();
+            uid.add(chatMsg.getToId());
+            putMsgInSendingCache(chatMsg, uid);
+        }
 
         // 若在线，则进行转发
         Long toUid = msg.getToUid();
@@ -106,6 +112,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         // 入库后发送MsgAck包
         sendMsgAckPacket(ctx, chatMsg);
 
+
         /*
         * 3. 转发消息到在线群成员
         * 从redis中的群所有成员的set和当前在线用户set两者取交集，获取群在线用户，逐个转发
@@ -113,6 +120,9 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         Set<Long> groupOnlineUsers = redisService.getGroupOnlineUsers(groupId);
         // 移除掉当前用户
         groupOnlineUsers.remove(WSUtils.getOnlineUserId(ctx.channel()));
+
+        // 消息进行可达性投递机制
+        putMsgInSendingCache(chatMsg, groupOnlineUsers);
 
         Iterator<Long> iterator = groupOnlineUsers.iterator();
         IMPacketProto.IMPacket packet = WSUtils.createIMPacket(IMConstant.CHATMSG_PROTOBUF_TYPE, null, msgToSend);
@@ -122,6 +132,26 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
             if (channel != null)
                 channel.writeAndFlush(packet);
         }
+    }
+
+    /**
+     * 把消息放入SENDING_CACHE_MSGS中并记录相关数据，进行可达性投递
+     * @param chatMsg
+     * @param targetUids
+     */
+    private void putMsgInSendingCache(ChatMsgProto.ChatMsg chatMsg, Set<Long> targetUids) {
+        ChatMsgCache msgCache = new ChatMsgCache();
+        msgCache.setType(chatMsg.getType());
+        msgCache.setMsgId(chatMsg.getMsgId());
+        msgCache.setMsgSeq(chatMsg.getMsgSeq());
+        msgCache.setFromUid(chatMsg.getFromUid());
+        msgCache.setToId(chatMsg.getToId());
+        msgCache.setContent(chatMsg.getContent());
+        msgCache.setTime(chatMsg.getTime());
+        msgCache.setContentType(chatMsg.getContentType());
+        msgCache.setUsername(chatMsg.getUsername());
+
+        redisService.setChatMsgInCheck(msgCache, targetUids);
     }
 
     /**

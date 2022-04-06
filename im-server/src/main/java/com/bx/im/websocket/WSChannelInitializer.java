@@ -57,6 +57,7 @@ public class WSChannelInitializer extends ChannelInitializer<NioSocketChannel> i
         pipeline.addLast(appContext.getBean(MsgReadHandler.class));
         pipeline.addLast(appContext.getBean(ConnectionHandler.class));
         pipeline.addLast(appContext.getBean(MsgCancelHandler.class));
+        pipeline.addLast(appContext.getBean(MsgReceivedAckHandler.class));
 
         pipeline.addLast(new IMPacketEncoder());
 

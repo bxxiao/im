@@ -19,7 +19,15 @@ import java.util.Map;
 public class Test {
 
     public static void main(String[] args) {
-        System.out.println("abx".substring(0, 0));
+        HashMap<String, Long> map = new HashMap<>();
+        map.put("a", 1L);
+        map.put("b", 2L);
+        map.put("c", 3L);
+
+        map.forEach((key, value) -> {
+            System.out.println(key);
+            System.out.println(value);
+        });
     }
 
     private static int testTryCatch() {

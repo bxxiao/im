@@ -2,6 +2,7 @@ package com.bx.im.cache.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bx.im.cache.RedisService;
+import com.bx.im.dto.ChatMsgCache;
 import com.bx.im.dto.GroupMsgDTO;
 import com.bx.im.entity.GroupUsers;
 import com.bx.im.service.bean.IGroupUsersService;
@@ -263,6 +264,33 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void setMsgCanceled(Long groupId, String msgId) {
         redisTemplate.opsForSet().add(GROUP_CANCELED_MSG_IDS_PRE + groupId, msgId);
+    }
+
+    @Override
+    public void setChatMsgInCheck(ChatMsgCache msg, Set<Long> targetUids) {
+
+        Map<Long, Long> records = new HashMap<>();
+
+        Iterator<Long> iterator = targetUids.iterator();
+        while (iterator.hasNext()) {
+            Long next = iterator.next();
+            records.put(next, 0L);
+        }
+
+        // redis事务
+        SessionCallback transaction = new SessionCallback() {
+            @Override
+            public Object execute(RedisOperations operations) throws DataAccessException {
+                operations.multi();
+                // 放入消息缓存
+                redisTemplate.opsForHash().put(SENDING_CACHE_MSGS_KEY, msg.getMsgId(), msg);
+                // 放入该消息的目标用户及已重发次数，后者初始为0
+                redisTemplate.opsForHash().putAll(RESEND_MSG_RECORDS_PRE + msg.getMsgId(), records);
+                return operations.exec();
+            }
+        };
+
+        redisTemplate.execute(transaction);
     }
 
 
