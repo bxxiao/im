@@ -50,7 +50,7 @@ public class ScheduleTask {
                     // 删掉记录
                     redisTemplate.opsForHash().delete(recordsKey, uid);
                     removed.getAndIncrement();
-                    log.info("消息[" + msgId + "] 投递失败 -【用户-" + uid + "】");
+                    log.info("消息[" + msgId + "] 转发失败 -【用户-" + uid + "】");
                     // 所有目标用户全部都投递失败了，移除掉消息
                     if (records.size() == removed.get())
                         redisTemplate.opsForHash().delete(RedisService.SENDING_CACHE_MSGS_KEY, msgId);

@@ -22,7 +22,7 @@ public class MsgReceivedAckHandler extends SimpleChannelInboundHandler<MsgReceiv
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MsgReceivedAckProto.MsgReceivedAck msg) throws Exception {
-        System.out.println("收到消息【" + msg.getMsgId() + "】的收到确认");
+        // System.out.println("收到消息【" + msg.getMsgId() + "】的收到确认");
         String msgId = msg.getMsgId();
         String recordsKey = RedisService.RESEND_MSG_RECORDS_PRE + msgId;
         // 移除掉记录

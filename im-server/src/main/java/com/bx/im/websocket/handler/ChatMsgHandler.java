@@ -46,6 +46,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ChatMsgProto.ChatMsg msg) throws Exception {
+        // System.out.println(msg.getUsername() + " " + msg.getContent());
         int msgType = msg.getType();
         switch (msgType) {
             // 单聊
@@ -179,7 +180,8 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
         msg.setMsgContent(chatMsg.getContent());
         msg.setTime(LocalDateTime.parse(chatMsg.getTime(), DateTimeFormatter.ISO_DATE_TIME));
         msg.setHasRead(false);
-        msg.setMsgType(chatMsg.getType());
+        //
+        msg.setMsgType(chatMsg.getContentType());
 
         return msg;
     }
