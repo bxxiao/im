@@ -379,6 +379,7 @@ public class ChatServiceImpl implements ChatService {
         if (!unreadMap.isEmpty()) {
             Set<Map.Entry<Long, Long>> entries = unreadMap.entrySet();
             for (Map.Entry<Long, Long> entry : entries) {
+                System.out.println("gid " + entry.getKey() + "  = count:" + entry.getValue());
                 ChatSession entity = new ChatSession();
                 entity.setUserId(uid);
                 entity.setToId(entry.getKey());
@@ -434,7 +435,8 @@ public class ChatServiceImpl implements ChatService {
             Long gid = entry.getKey();
             Long lastSeq = entry.getValue();
             Long unReadCount = redisService.getGroupUnReadCount(gid, lastSeq);
-            map.put(gid, unReadCount);
+            if (unReadCount.compareTo(0L) > 0)
+                map.put(gid, unReadCount);
         }
 
         return map;

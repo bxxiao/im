@@ -36,5 +36,22 @@ public class UserController {
             return CommonResult.error(ExceptionCodeEnum.REQUEST_ERROR);
     }
 
+    @PostMapping("/registry")
+    public CommonResult doRegistry(String username, String phone, String password) {
+        userService.doRegistry(username, phone, password);
+        return CommonResult.success();
+    }
+
+    @PostMapping("/edit")
+    public CommonResult editInfo(Long uid, String name, String phone, String intro) {
+        userService.editInfo(uid, name, phone, intro);
+        return CommonResult.success();
+    }
+
+    @PostMapping("/editPwd")
+    public CommonResult editPwd(Long uid, String oldPwd, String newPwd) {
+        userService.editPwd(uid, oldPwd, newPwd);
+        return CommonResult.success();
+    }
 
 }

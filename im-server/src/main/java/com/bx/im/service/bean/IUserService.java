@@ -20,4 +20,10 @@ public interface IUserService extends IService<User> {
     UserDTO login(String phone, String password);
 
     UserDTO getUserInfo(Long uid);
+
+    void doRegistry(String username, String phone, String password);
+
+    void editInfo(Long uid, String name, String phone, String intro);
+
+    void editPwd(Long uid, String oldPwd, String newPwd);
 }

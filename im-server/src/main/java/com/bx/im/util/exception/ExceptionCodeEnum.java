@@ -22,7 +22,10 @@ public enum  ExceptionCodeEnum implements IExceptionCode {
     HAD_IN_FRIEND_RELATIONSHIP(1012, "已经是好友关系"),
     HAD_SEND_APPLY(1013, "已发出申请，请等待处理"),
     HAD_BEEN_A_MEMBER(1014, "已经是该群成员"),
-    DENIED_FOR_NO_LOGIN(1015, "未登录");
+    DENIED_FOR_NO_LOGIN(1015, "未登录"),
+    USERNAME_DUPLICATE(1016, "用户名已存在"),
+    PHONE_DUPLICATE(1017, "该电话号码已被注册"),
+    OLD_PASSWORD_ERROR(1018, "旧密码错误");
 
 
     private Integer code;

@@ -1,6 +1,7 @@
 package com.bx.im.config;
 
 import com.bx.im.util.CommonResult;
+import com.bx.im.util.SpringUtils;
 import com.bx.im.util.exception.ExceptionCodeEnum;
 import com.bx.im.util.exception.IMException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,11 +20,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IMException.class)
     @ResponseBody
     public CommonResult handleIMException(HttpServletRequest request, HttpServletResponse response, IMException exception) {
-        System.out.println("捕获到异常：" + exception.toString());
+        Long uid = SpringUtils.getUidInToken();
+        System.out.println("捕获到异常：【{uid-" + uid + "} - " + request.getRequestURL() + "】- " + exception.toString());
         /*
         * TODO:用更好的方法打印异常位置？
         * */
-        exception.printStackTrace();
+        // exception.printStackTrace();
         return CommonResult.error(exception.getCode(), exception.getMessage());
     }
 

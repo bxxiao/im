@@ -51,7 +51,7 @@ public class ApplicationConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(globalInterceptor).excludePathPatterns("/api/user/login", "/upload/**");
+                registry.addInterceptor(globalInterceptor).excludePathPatterns("/api/user/login", "/upload/**", "/api/user/registry");
             }
         };
     }

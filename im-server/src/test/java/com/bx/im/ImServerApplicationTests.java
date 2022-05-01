@@ -5,6 +5,7 @@ package com.bx.im;
 // import com.google.protobuf.util.JsonFormat;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bx.im.cache.RedisService;
 import com.bx.im.dto.*;
@@ -48,6 +49,23 @@ class ImServerApplicationTests {
 
     @Autowired
     private IUserFriendService userFriendService;
+
+    @Autowired
+    private IFriendMsgService friendMsgService;
+
+    @Test
+    public void testTemp(){
+        List<FriendMsg> msgs = friendMsgService.list();
+        for (FriendMsg msg : msgs) {
+            Long senderUid = msg.getSenderUid();
+            Long toUid = msg.getToUid();
+            Long from = senderUid.compareTo(toUid) < 0 ? senderUid : toUid;
+            Long to = from.equals(senderUid) ? toUid : senderUid;
+            UpdateWrapper<FriendMsg> wrapper = new UpdateWrapper<>();
+            wrapper.eq("id", msg.getId()).set("query_from", from).set("query_to", to);
+            friendMsgService.update(wrapper);
+        }
+    }
 
     /*
      * listObjs方法返回一个List，元素是每条记录的第一个值
