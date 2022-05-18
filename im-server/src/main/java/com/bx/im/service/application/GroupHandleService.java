@@ -2,9 +2,6 @@ package com.bx.im.service.application;
 
 import java.util.List;
 
-/*
-* TODO：FriendHandleService中相关接口移到这里
-* */
 public interface GroupHandleService {
 
     /**

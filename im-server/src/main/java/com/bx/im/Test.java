@@ -15,19 +15,67 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Test {
 
-    public static void main(String[] args) {
-        HashMap<String, Long> map = new HashMap<>();
-        map.put("a", 1L);
-        map.put("b", 2L);
-        map.put("c", 3L);
-
-        map.forEach((key, value) -> {
-            System.out.println(key);
-            System.out.println(value);
+    public static void main(String[] args) throws InterruptedException {
+        ReentrantLock lock = new ReentrantLock();
+        Thread t1 = new Thread(() -> {
+            try {
+                lock.lock();
+                Thread.sleep(6000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                System.out.println("thread1 unlock");
+                lock.unlock();
+            }
         });
+
+
+        Thread t2 = new Thread(() -> {
+            int count = 1;
+            while (count < 3) {
+                try {
+                    if (lock.tryLock(1, TimeUnit.SECONDS)) {
+                        System.out.println("t2 get lock success");
+                    } else {
+                        count++;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        t1.start();
+        Thread.sleep(1000);
+        t2.start();
+
+    }
+
+    public static int info(int n) {
+        // 兔子总对数
+        int sum = 1;
+
+        // 小兔子的对数
+        int little = 1;
+        // 长大的兔子对数
+        int old = 0;
+
+        for (int i = 0; i < n; i++) {
+            int temp = old;
+            // 加上长大兔子生的
+            sum += temp;
+            // 小兔子长大
+            old += little;
+            // 新的小兔子
+            little = temp;
+        }
+
+        return sum * 2;
     }
 
     private static int testTryCatch() {

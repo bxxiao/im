@@ -28,9 +28,6 @@ public class MsgReadHandler extends SimpleChannelInboundHandler<MsgReadProto.Msg
     protected void channelRead0(ChannelHandlerContext ctx, MsgReadProto.MsgRead msg) throws Exception {
         List<String> list = msg.getMsgIdsList();
         UpdateWrapper<FriendMsg> wrapper = new UpdateWrapper<>();
-        /*
-        * 逐条更新已读字段，这里不用 IN 子句，可能会触发范围锁
-        * */
         list.forEach(msgId -> {
             wrapper.clear();
             wrapper.eq("msg_id", msgId).set("has_read", 1);

@@ -29,9 +29,6 @@ public class ScheduleTask {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    /*
-    *
-    * */
     @Scheduled(fixedRate=4000)
     private void configureTasks() {
         Map<String, ChatMsgCache> entries = redisTemplate.opsForHash().entries(RedisService.SENDING_CACHE_MSGS_KEY);

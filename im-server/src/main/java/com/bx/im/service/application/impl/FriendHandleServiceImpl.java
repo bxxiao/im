@@ -56,14 +56,12 @@ public class FriendHandleServiceImpl implements FriendHandleService {
     private IChatSessionService chatSessionService;
 
 
-    // TODO：可以不用uid这个参数
     @Override
     public List<ApplyDTO> listApplys(Long uid) {
         checkUser(uid);
         QueryWrapper<Apply> wrapper = new QueryWrapper<>();
         /*
         * 查询发给自己的
-        * TODO：同时查询自己发出的申请【.or().eq("sender_uid", uid)】，并在前端作区分处理
         * */
         wrapper.eq("to_uid", uid);
         List<Apply> list = applyService.list(wrapper);
@@ -112,17 +110,11 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 entity.setFriendUid(apply.getSenderUid());
                 entity.setId(null);
                 userFriendService.save(entity);
-                /*
-                * TODO：通过WebSocket发送通知？
-                * */
             // 群聊邀请
             } else if (apply.getType() == Apply.GROUP_INVITATION) {
                 QueryWrapper<GroupInfo> groupInfoWrapper = new QueryWrapper<>();
                 groupInfoWrapper.eq("id", apply.getGroupId()).eq("deleted", 0);
                 if (groupInfoService.count(groupInfoWrapper) == 0)
-                    /*
-                    * TODO：对应申请应该删除或修改状态
-                    * */
                     throw new IMException(ExceptionCodeEnum.NO_SUCH_GROUP);
                 GroupUsers groupUsers = new GroupUsers();
                 groupUsers.setGroupId(apply.getGroupId());
@@ -130,9 +122,6 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 groupUsersService.save(groupUsers);
                 // redis中设置该用户的last_MsgSeq
                 redisService.initLastSeq(apply.getToUid(), apply.getGroupId());
-                /*
-                * TODO：发一个新成员入群通知？
-                * */
             // 入群申请
             } else if (apply.getType() == Apply.GROUP_APPLY) {
                 QueryWrapper<GroupInfo> groupInfoWrapper = new QueryWrapper<>();
@@ -227,7 +216,6 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         if (deleted.equals(uid))
             throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
 
-        // TODO：抽取公共代码（quitGroup中）
         QueryWrapper<GroupUsers> wrapper = new QueryWrapper<>();
         wrapper.eq("group_id", groupId).eq("user_id", deleted);
         if (!groupUsersService.remove(wrapper))
@@ -280,8 +268,6 @@ public class FriendHandleServiceImpl implements FriendHandleService {
         if (groupUsersService.count(wrapper) <= 0)
             throw new IMException(ExceptionCodeEnum.NOT_GROUP_MEMBER);
 
-        // TODO：群主暂时不支持该操作（可以改为群主退出群聊时自动选择一个新群主）
-        // TODO：group_users表加个时间字段
         if (isMaster(groupId, uid))
             throw new IMException(ExceptionCodeEnum.DENIED_OPERATION_FOR_GROUP_MASTER);
 
@@ -397,7 +383,6 @@ public class FriendHandleServiceImpl implements FriendHandleService {
                 .select("id", "group_number", "name", "avatar");
         List<GroupInfo> groupInfos = groupInfoService.list(wrapper2);
         List<ItemDTO> groupInfoItems = groupInfos.stream()
-                // TODO:过滤已加入的群
                 .map(info -> groupInfoToItemDTO(info))
                 .collect(Collectors.toList());
 

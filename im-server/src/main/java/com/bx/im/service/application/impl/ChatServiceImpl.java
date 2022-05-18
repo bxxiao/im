@@ -45,37 +45,167 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatPageDTO getChatPageData(Long uid) {
         ChatPageDTO chatPageDTO = new ChatPageDTO();
-
-        // 1.查当前用户所有会话的entity，转换为dto
+        LinkedList<ChatSessionDTO> sessionList = new LinkedList<>();
+        // 查当前用户所有会话的entity，转换为dto
         QueryWrapper<ChatSession> wrapper = Wrappers.query();
-        List<ChatSession> sessionEntities = sessionService.list(wrapper.eq("user_id", uid));
-        // 保存单聊类型会话
-        List<ChatSessionDTO> sessionList1 = new ArrayList<>();
-        // 保存群聊类型会话
-        List<ChatSessionDTO> sessionList2 = new ArrayList<>();
+        List<ChatSessionDTO> dtos = sessionService
+                .list(wrapper.eq("user_id", uid))
+                .stream()
+                .map(item -> toChatSessionDTO(item))
+                .collect(Collectors.toList());
 
-        // 转换为dto，并根据类型放在2个list
-        for (ChatSession entity : sessionEntities) {
-            ChatSessionDTO dto = toChatSessionDTO(entity);
+        // 获取用户单聊和群聊中各自的未读数（用户/群id —— 未读数）
+        Map<Long, Long> unreadMapSingle = friendMsgService.getAllUnreadNum(uid);
+        Map<Long, Long> unreadMapGroup = getGroupMsgUnreadMap(uid);
+
+        for (ChatSessionDTO dto : dtos) {
             if (dto.getType() == IMConstant.SINGLE_CHAT_TYPE)
-                sessionList1.add(dto);
+                dealSingleTypeSession(dto, sessionList, unreadMapSingle, uid);
             else if (dto.getType() == IMConstant.GROUP_CHAT_TYPE)
-                sessionList2.add(dto);
+                dealGroupTypeSession(dto, sessionList, unreadMapGroup, uid);
         }
 
-        // 分别处理单群聊会话
-        dealSingleTypeSessions(sessionList1, uid);
-        dealGroupTypeSessions(sessionList2, uid);
+        // 有新消息但是没有对应会话，则创建一个新会话，分为单聊、群聊
+        if (!unreadMapSingle.isEmpty()) {
+            Set<Map.Entry<Long, Long>> entries = unreadMapSingle.entrySet();
+            for (Map.Entry<Long, Long> entry : entries) {
+                ChatSession entity = new ChatSession();
+                entity.setUserId(uid);
+                entity.setToId(entry.getKey());
+                entity.setType(IMConstant.SINGLE_CHAT_TYPE);
 
-        sessionList1.addAll(sessionList2);
-        chatPageDTO.setSessionList(sessionList1);
+                // 查询好友的名称和头像
+                User friend = userService.getOne(new QueryWrapper<User>().eq("id", entry.getKey()).select("name", "avatar"));
+                entity.setToName(friend.getName());
+                entity.setToAvatar(friend.getAvatar());
+
+                // 入库
+                sessionService.save(entity);
+                // 创建对应的dto，加入sessionList
+                ChatSessionDTO entityDto = toChatSessionDTO(entity);
+                entityDto.setUnread(entry.getValue());
+                // 放在前面
+                sessionList.addFirst(entityDto);
+            }
+        }
+
+
+        if (!unreadMapGroup.isEmpty()) {
+            Set<Map.Entry<Long, Long>> entries = unreadMapGroup.entrySet();
+            for (Map.Entry<Long, Long> entry : entries) {
+                System.out.println("gid " + entry.getKey() + "  = count:" + entry.getValue());
+                ChatSession entity = new ChatSession();
+                entity.setUserId(uid);
+                entity.setToId(entry.getKey());
+                entity.setType(IMConstant.GROUP_CHAT_TYPE);
+
+                // 查询好友的名称和头像
+                GroupInfo info = groupInfoService.getOne(new QueryWrapper<GroupInfo>().eq("id", entry.getKey()).select("name", "avatar"));
+                entity.setToName(info.getName());
+                entity.setToAvatar(info.getAvatar());
+
+                // 入库
+                sessionService.save(entity);
+                // 创建对应的dto，加入sessionList
+                ChatSessionDTO entityDto = toChatSessionDTO(entity);
+                entityDto.setUnread(entry.getValue());
+                sessionList.addFirst(entityDto);
+            }
+        }
+
+        chatPageDTO.setSessionList(sessionList);
         // 查询当前用户的信息
         User user = userService.getById(uid);
         UserDTO userDTO = new UserDTO();
         BeanUtils.copyProperties(user, userDTO);
         chatPageDTO.setUserInfo(userDTO);
-
         return chatPageDTO;
+    }
+
+    private void dealSingleTypeSession(ChatSessionDTO session, LinkedList<ChatSessionDTO> sessilnList,
+                                       Map<Long, Long> unreadMap, Long uid) {
+        // 标识当前会话项是否有未读消息
+        boolean tag = false;
+        // 设置未读数
+        long toId = session.getToId();
+        if (unreadMap.containsKey(toId)) {
+            tag = true;
+            session.setUnread(unreadMap.get(toId));
+            unreadMap.remove(toId);
+        }
+
+        // 查询最后一条消息
+        QueryWrapper<FriendMsg> msgWrapper = new QueryWrapper<>();
+        /*
+         * select "msg_content", "time" from friend_msg
+         * where ((sender_uid = ? AND to_uid = ?) OR (sender_uid = ? AND to_uid = ?))
+         * ORDER BY msg_seq DESC
+         * limit 1
+         * */
+        msgWrapper.or(i -> i.eq("sender_uid", uid).eq("to_uid", session.getToId()))
+                .or(i -> i.eq("sender_uid", session.getToId()).eq("to_uid", uid))
+                .orderByDesc("msg_seq")
+                .last("limit 1")
+                .select("msg_content", "time", "msg_type", "has_cancel", "sender_uid");
+        FriendMsg msg = friendMsgService.getOne(msgWrapper);
+        if (msg != null) {
+            Long curUid = getUidInToken();
+            if (msg.getHasCancel()) {
+                String content;
+                if (curUid.equals(msg.getSenderUid()))
+                    content = "你 撤回了消息";
+                else {
+                    QueryWrapper<User> wrapper = new QueryWrapper<>();
+                    wrapper.eq("id", msg.getSenderUid()).select("name");
+                    User user = userService.getOne(wrapper);
+                    content = user.getName() + " 撤回了消息";
+                }
+
+                session.setLastMsg(content);
+            } else if (msg.getMsgType() != null && msg.getMsgType() == 2)
+                session.setLastMsg("[文件]");
+            else
+                session.setLastMsg(msg.getMsgContent());
+            session.setTime(msg.getTime().toString());
+        }
+
+        // 有新消息则放在前面
+        if (tag)
+            sessilnList.addFirst(session);
+        else
+            sessilnList.addLast(session);
+    }
+
+    private void dealGroupTypeSession(ChatSessionDTO session, LinkedList<ChatSessionDTO> sessilnList,
+                                       Map<Long, Long> unreadMap, Long uid) {
+        // 标识当前会话项是否有未读消息
+        boolean tag = false;
+        // 设置未读数
+        long toId = session.getToId();
+        if (unreadMap.containsKey(toId)) {
+            tag = true;
+            session.setUnread(unreadMap.get(toId));
+            unreadMap.remove(toId);
+        }
+
+        // 查询最后一条消息
+        long gid = session.getToId();
+        Long curUid = getUidInToken();
+        GroupMsgDTO lastMsg = redisService.getLastGroupMsg(gid, curUid);
+        /*
+         * 若为null，表示当前没有消息；这时不用设置属性，前端有对null和undefined值的处理
+         * */
+        if (lastMsg != null) {
+            String content = lastMsg.getType() != null && lastMsg.getType() == 2 ? "[文件]" : lastMsg.getContent();
+            session.setLastMsg(content);
+            session.setTime(lastMsg.getTime());
+        }
+
+        // 有新消息则放在前面
+        if (tag)
+            sessilnList.addFirst(session);
+        else
+            sessilnList.addLast(session);
     }
 
     @Override
@@ -114,8 +244,6 @@ public class ChatServiceImpl implements ChatService {
             List<ChatMsgDTO> collect = groupMsgs.stream().map(item -> toChatMsgDTO(item)).collect(Collectors.toList());
             result.setMsgs(collect);
 
-            // TODO：若群成员过多，在前端按需请求更好？
-            // TODO：bug：群成员被踢走后，消息不会被删除，但这里将不能查到头像
             // 获取群成员的头像信息
             Map<Long, String> avatarMap = queryGroupAvatarMap(toId);
             result.setAvatarMap(avatarMap);
@@ -131,8 +259,8 @@ public class ChatServiceImpl implements ChatService {
 
         ChatSession entity = new ChatSession();
         /*
-        * 返回的dto只需要包含avatar和name
-        * */
+         * 返回的dto只需要包含avatar和name
+         * */
         ChatSessionDTO dto = new ChatSessionDTO();
 
         entity.setUserId(uid);
@@ -206,8 +334,8 @@ public class ChatServiceImpl implements ChatService {
     public GroupDataDTO getGroupInfo(Long uid, Long groupId) {
         GroupDataDTO dto = new GroupDataDTO();
         /*
-        * 查group_info表
-        * */
+         * 查group_info表
+         * */
         QueryWrapper<GroupInfo> wrapper1 = new QueryWrapper<>();
         wrapper1.eq("id", groupId).select("id", "name", "master_uid");
         GroupInfo groupInfo = groupInfoService.getOne(wrapper1);
@@ -220,8 +348,8 @@ public class ChatServiceImpl implements ChatService {
         dto.setMasterId(groupInfo.getMasterUid());
 
         /*
-        * 查出群成员的id，再查出对应的User对象的List
-        * */
+         * 查出群成员的id，再查出对应的User对象的List
+         * */
         QueryWrapper<GroupUsers> wrapper2 = new QueryWrapper<>();
         wrapper2.eq("group_id", groupId).select("user_id");
         List<Object> memberIds = groupUsersService.listObjs(wrapper2);
@@ -231,8 +359,8 @@ public class ChatServiceImpl implements ChatService {
         List<User> users = userService.list(wrapper3);
 
         /*
-        * 转换为GroupDataDTO.GroupMember对象，并设置dto的群主名
-        * */
+         * 转换为GroupDataDTO.GroupMember对象，并设置dto的群主名
+         * */
         List<GroupDataDTO.GroupMember> members = users.stream().map(user -> {
             GroupDataDTO.GroupMember member = new GroupDataDTO.GroupMember();
             member.setUid(user.getId());
@@ -263,12 +391,12 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /*
-    * 将反序的groupMsgSet转为正序的List
-    * */
+     * 将反序的groupMsgSet转为正序的List
+     * */
     private List<ChatMsgDTO> toAescMsgs(Set<GroupMsgDTO> groupMsgSet) {
         /*
-        * Set是一个LinkedHashSet，所以查出的消息是按反序排列的，转为List后进行一次反转返回
-        * */
+         * Set是一个LinkedHashSet，所以查出的消息是按反序排列的，转为List后进行一次反转返回
+         * */
         List<ChatMsgDTO> collect = groupMsgSet.stream().map(msg -> toChatMsgDTO(msg)).collect(Collectors.toList());
         Collections.reverse(collect);
 
@@ -276,157 +404,18 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * 处理单聊会话列表，为每个会话查询未读数和最后一条消息
-     * TODO：dealSingleTypeSessions 和 dealGroupTypeSessions 的逻辑合为一个
-     * @param sessionList
-     * @param uid
-     */
-    private void dealSingleTypeSessions(List<ChatSessionDTO> sessionList, Long uid) {
-        // 1. 查询未读消息数
-        // <userId - unread num>
-        Map<Long, Long> unreadMap = friendMsgService.getAllUnreadNum(uid);
-        sessionList.forEach(session -> {
-            Long toId = session.getToId();
-            if (unreadMap.containsKey(toId)) {
-                session.setUnread(unreadMap.get(toId));
-                // 设置完移除掉
-                unreadMap.remove(toId);
-            }
-        });
-
-        // 有新消息但是没有对应会话，则创建一个新会话
-        if (!unreadMap.isEmpty()) {
-            Set<Map.Entry<Long, Long>> entries = unreadMap.entrySet();
-            for (Map.Entry<Long, Long> entry : entries) {
-                ChatSession entity = new ChatSession();
-                entity.setUserId(uid);
-                entity.setToId(entry.getKey());
-                entity.setType(IMConstant.SINGLE_CHAT_TYPE);
-
-                // 查询好友的名称和头像
-                User friend = userService.getOne(new QueryWrapper<User>().eq("id", entry.getKey()).select("name", "avatar"));
-                entity.setToName(friend.getName());
-                entity.setToAvatar(friend.getAvatar());
-
-                // 入库
-                sessionService.save(entity);
-                // 创建对应的dto，加入sessionList
-                ChatSessionDTO entityDto = toChatSessionDTO(entity);
-                entityDto.setUnread(entry.getValue());
-                sessionList.add(entityDto);
-            }
-        }
-
-        // 2. 为每个会话（单聊）查询最后一条消息
-        sessionList.forEach(dto -> {
-            QueryWrapper<FriendMsg> msgWrapper = new QueryWrapper<>();
-            /*
-             * select "msg_content", "time" from friend_msg
-             * where ((sender_uid = ? AND to_uid = ?) OR (sender_uid = ? AND to_uid = ?))
-             * ORDER BY msg_seq DESC
-             * limit 1
-             * */
-            msgWrapper.or(i -> i.eq("sender_uid", uid).eq("to_uid", dto.getToId()))
-                    .or(i -> i.eq("sender_uid", dto.getToId()).eq("to_uid", uid))
-                    .orderByDesc("msg_seq")
-                    .last("limit 1")
-                    .select("msg_content", "time", "msg_type", "has_cancel", "sender_uid");
-            List<FriendMsg> list = friendMsgService.list(msgWrapper);
-            if (!list.isEmpty()) {
-
-                FriendMsg msg = list.get(0);
-                Long curUid = getUidInToken();
-                if (msg.getHasCancel()) {
-                    String content;
-                    if (curUid.equals(msg.getSenderUid()))
-                        content = "你 撤回了消息";
-                    else {
-                        QueryWrapper<User> wrapper = new QueryWrapper<>();
-                        wrapper.eq("id", msg.getSenderUid()).select("name");
-                        User user = userService.getOne(wrapper);
-                        content = user.getName() + " 撤回了消息";
-                    }
-
-                    dto.setLastMsg(content);
-                }
-                else if (msg.getMsgType() != null && msg.getMsgType() == 2)
-                    dto.setLastMsg("[文件]");
-                else
-                    dto.setLastMsg(msg.getMsgContent());
-                dto.setTime(msg.getTime().toString());
-            }
-        });
-    }
-
-    /**
-     * 处理群聊会话列表，为每个会话查询未读数和最后一条消息
-     * @param sessionList
-     * @param uid
-     */
-    private void dealGroupTypeSessions(List<ChatSessionDTO> sessionList, Long uid) {
-        // 1.查询未读数，若没有对应会话，则创建新会话项
-        Map<Long, Long> unreadMap = getGroupMsgUnreadMap(uid);
-        sessionList.forEach(session -> {
-            Long toId = session.getToId();
-            if (unreadMap.containsKey(toId)) {
-                session.setUnread(unreadMap.get(toId));
-                // 设置完移除掉
-                unreadMap.remove(toId);
-            }
-        });
-
-        // 有新消息但是没有对应会话，则创建一个新会话
-        if (!unreadMap.isEmpty()) {
-            Set<Map.Entry<Long, Long>> entries = unreadMap.entrySet();
-            for (Map.Entry<Long, Long> entry : entries) {
-                System.out.println("gid " + entry.getKey() + "  = count:" + entry.getValue());
-                ChatSession entity = new ChatSession();
-                entity.setUserId(uid);
-                entity.setToId(entry.getKey());
-                entity.setType(IMConstant.GROUP_CHAT_TYPE);
-
-                // 查询好友的名称和头像
-                GroupInfo info = groupInfoService.getOne(new QueryWrapper<GroupInfo>().eq("id", entry.getKey()).select("name", "avatar"));
-                entity.setToName(info.getName());
-                entity.setToAvatar(info.getAvatar());
-
-                // 入库
-                sessionService.save(entity);
-                // 创建对应的dto，加入sessionList
-                ChatSessionDTO entityDto = toChatSessionDTO(entity);
-                entityDto.setUnread(entry.getValue());
-                sessionList.add(entityDto);
-            }
-        }
-
-        // 查询最后一条消息
-        sessionList.forEach(session -> {
-            long gid = session.getToId();
-            Long curUid = getUidInToken();
-            GroupMsgDTO lastMsg = redisService.getLastGroupMsg(gid, curUid);
-            /*
-            * 若为null，表示当前没有消息；这时不用设置属性，前端有对null和undefined值的处理
-            * */
-            if (lastMsg != null) {
-                String content = lastMsg.getType() != null && lastMsg.getType() == 2 ? "[文件]" : lastMsg.getContent();
-                session.setLastMsg(content);
-                session.setTime(lastMsg.getTime());
-            }
-        });
-    }
-
-    /**
      * 获取用户的所有群聊的消息未读数（ >0 的）
+     *
      * @param uid
      * @return
      */
     private Map<Long, Long> getGroupMsgUnreadMap(Long uid) {
         Map<Long, Long> map = new HashMap<>();
         /*
-        * 1 从USER_LAST_GMSG_SEQ_中获取当前用户加入的所有群对应的所有last_seq
-        * 这里默认用户加入群聊时，会在USER_LAST_GMSG_SEQ中添加对应last_seq，即USER_LAST_GMSG_SEQ中保存了用户加入的所有群
-        * [groupId - lastSeq]
-        * */
+         * 1 从USER_LAST_GMSG_SEQ_中获取当前用户加入的所有群对应的所有last_seq
+         * 这里默认用户加入群聊时，会在USER_LAST_GMSG_SEQ中添加对应last_seq，即USER_LAST_GMSG_SEQ中保存了用户加入的所有群
+         * [groupId - lastSeq]
+         * */
         Map<Long, Long> userLastSeqMap = redisService.getUserLastSeqMap(uid);
 
         // 2 根据每个last_seq到对应群消息的zset中查询有多少消息未读

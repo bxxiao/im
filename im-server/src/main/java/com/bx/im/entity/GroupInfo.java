@@ -25,7 +25,6 @@ public class GroupInfo implements Serializable {
 
     /**
      * 群号码
-     * TODO:有查询群消息的地方,补上该字段
      */
     private String groupNumber;
 

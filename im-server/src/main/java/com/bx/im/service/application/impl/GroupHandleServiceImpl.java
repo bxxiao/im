@@ -103,13 +103,6 @@ public class GroupHandleServiceImpl implements GroupHandleService {
         if (!groupInfo.getMasterUid().equals(masterUid))
             throw new IMException(ExceptionCodeEnum.PERMISSION_DENIED_FOR_NOT_MASTER);
 
-        /*
-        * 删除群信息
-        * TODO：这一步暂且不删，删除群聊后，在获取申请列表时需要查询群名，会导致NPE
-        *  2种解决方法：
-        *   apply增加一个冗余字段存储群名
-        *   对group_info的记录删除使用逻辑删除
-        * */
         // groupInfoService.removeById(groupId);
 
         QueryWrapper<GroupUsers> groupUsersWrapper = new QueryWrapper<>();
@@ -122,11 +115,6 @@ public class GroupHandleServiceImpl implements GroupHandleService {
         // 移除所有群成员
         groupUsersService.remove(groupUsersWrapper);
 
-        /*
-        * TODO：
-        *   暂定为把所有相关会话删除，可以不删除，当用户打开会话时提示群已解散；
-        *   发送一条通知（新建notice表）
-        * */
         //删除会话
         QueryWrapper<ChatSession> sessionWrapper = new QueryWrapper<>();
         sessionWrapper.eq("to_id", groupId).eq("type", IMConstant.GROUP_CHAT_TYPE);

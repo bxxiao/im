@@ -13,19 +13,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/*
-* TODO：FriendHandleController中相关接口移到这里
-* */
 @RestController
 @RequestMapping("/api/group/")
 public class GroupHandleController {
 
     @Autowired
     private GroupHandleService groupHandleService;
-
-    /*
-    * TODO：新成员入群后，group_info表的成员数+1
-    * */
 
     /**
      * 请求从content-type是表单类型，不是json，所以不用使用@RequestBody

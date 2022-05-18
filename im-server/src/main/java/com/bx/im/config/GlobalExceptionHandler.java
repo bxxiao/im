@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/*
-* TODO：添加日志
-* */
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -22,9 +20,6 @@ public class GlobalExceptionHandler {
     public CommonResult handleIMException(HttpServletRequest request, HttpServletResponse response, IMException exception) {
         Long uid = SpringUtils.getUidInToken();
         System.out.println("捕获到异常：【{uid-" + uid + "} - " + request.getRequestURL() + "】- " + exception.toString());
-        /*
-        * TODO:用更好的方法打印异常位置？
-        * */
         // exception.printStackTrace();
         return CommonResult.error(exception.getCode(), exception.getMessage());
     }

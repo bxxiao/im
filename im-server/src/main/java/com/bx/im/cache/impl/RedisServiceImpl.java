@@ -142,7 +142,6 @@ public class RedisServiceImpl implements RedisService {
         Set<String> canceledIdSet = redisTemplate.opsForSet().members(GROUP_CANCELED_MSG_IDS_PRE + groupId);
         // [...] （左右闭区间）
         /*
-        * TODO：可以使用reverseRangeByScore(K key, double min, double max, long offset, long count)来更准确的获取10条旧消息
         * 若序号不是严格递增的，则使用 lastMsgSeq - 9 不一定能获取到10条消息
         * */
         Set<GroupMsgDTO> set = redisTemplate.opsForZSet().rangeByScore(GROUP_MSGS_PRE + groupId, lastMsgSeq - 9, Double.MAX_VALUE);
@@ -180,7 +179,6 @@ public class RedisServiceImpl implements RedisService {
                 Long uid = (Long) map.get("user_id");
                 return uid;
             }).collect(Collectors.toList());
-            // TODO：加上过期时间
             redisTemplate.opsForSet().add(allMembersKey, userIds.toArray());
         }
         // 群成员id set跟在线用户set取交集，得到在线群成员

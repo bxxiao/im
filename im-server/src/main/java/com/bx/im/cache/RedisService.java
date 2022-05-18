@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/*
-* TODO：把单纯的 redis 操作封装在 RedisService ，业务操作放在对应的service？
-* */
 public interface RedisService {
 
     String SINGE_MSG_SEQ_KEY = "SINGE_MSG_SEQ_KEY";

@@ -65,6 +65,7 @@ public class ChatMsgHandler extends SimpleChannelInboundHandler<ChatMsgProto.Cha
      *
      * */
     private void handleSingChatMsg(ChatMsgProto.ChatMsg chatMsg, ChannelHandlerContext ctx) {
+        // 判断消息是否已入库
         QueryWrapper<FriendMsg> wrapper = new QueryWrapper<>();
         wrapper.eq("msg_id", chatMsg.getMsgId());
         if (msgService.count(wrapper) > 0L) {
